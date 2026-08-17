@@ -1,0 +1,18 @@
+export type FarmStand = {
+  id: string;
+  name: string;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  zip_code: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  description: string | null;
+  phone: string | null;
+  website: string | null;
+  hours: string | null;
+  payment_methods: string | null;
+  is_verified: boolean;
+  is_active: boolean;
+  created_at: string;
+};
