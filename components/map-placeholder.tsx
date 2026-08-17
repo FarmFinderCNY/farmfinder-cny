@@ -1,4 +1,12 @@
+"use client";
+
+import dynamic from "next/dynamic";
 import type { FarmStand } from "@/lib/types";
+
+const FarmMap = dynamic(() => import("@/components/farm-map").then((module) => module.FarmMap), {
+  ssr: false,
+  loading: () => <div className="map-loading">Loading farm map…</div>,
+});
 
 export function MapPlaceholder({ stands }: { stands: FarmStand[] }) {
   const mapped = stands.filter((stand) => stand.latitude !== null && stand.longitude !== null);
@@ -14,13 +22,8 @@ export function MapPlaceholder({ stands }: { stands: FarmStand[] }) {
             : "Farm locations will appear here as they are added."}
         </p>
       </div>
-      <div className="map-canvas" aria-label="Map integration area">
-        <span className="road road-one" />
-        <span className="road road-two" />
-        <span className="map-pin pin-one">1</span>
-        <span className="map-pin pin-two">2</span>
-        <span className="map-pin pin-three">3</span>
-        <div className="map-ready">Map integration ready</div>
+      <div className="map-canvas" aria-label="Interactive map of active farm stands">
+        {mapped.length > 0 ? <FarmMap stands={mapped} /> : <div className="map-loading">Add coordinates to place farms on the map.</div>}
       </div>
     </section>
   );

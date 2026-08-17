@@ -36,4 +36,4 @@ No other build settings are required.
 
 ## Map integration
 
-`components/map-placeholder.tsx` is deliberately isolated as the map boundary. Replace its visual placeholder with Mapbox, Leaflet, Google Maps, or another provider; the component already receives active stands with latitude and longitude.
+The app includes an interactive Leaflet map using OpenStreetMap tiles. Active stands with both latitude and longitude appear automatically as clickable pins; listings without coordinates remain visible in the stand list but are omitted from the map.
