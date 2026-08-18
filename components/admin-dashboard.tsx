@@ -24,10 +24,11 @@ type Submission = {
 };
 
 export function AdminDashboard() {
-  const [signedIn, setSignedIn] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [error, setError] = useState("");
+ const [signedIn, setSignedIn] = useState(false);
+const [loading, setLoading] = useState(true);
+const [submissions, setSubmissions] = useState<Submission[]>([]);
+const [error, setError] = useState("");
+const [workingId, setWorkingId] = useState<string | null>(null);
  const loadSubmissions = useCallback(async () => {
   setLoading(true);
   setError("");
