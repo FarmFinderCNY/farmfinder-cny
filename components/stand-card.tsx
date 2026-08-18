@@ -32,20 +32,50 @@ export function StandCard({ stand }: { stand: FarmStand }) {
     </div>
 
     <div className="live-inventory-items">
+    {stand.inventory && stand.inventory.length > 0 && (
+  <section className="live-inventory">
+    <div className="live-inventory-heading">
+      <div>
+        <p className="eyebrow">Fresh at the stand</p>
+        <strong>Available now</strong>
+      </div>
+
+      {stand.inventory_updated_at && (
+        <span className="inventory-updated">
+          Updated{" "}
+          {new Date(stand.inventory_updated_at).toLocaleString()}
+        </span>
+      )}
+    </div>
+
+    <div className="live-inventory-items">
       {stand.inventory
         .filter((item) => item.status !== "sold_out")
         .slice(0, 4)
         .map((item) => (
-          <div className="live-inventory-item" key={item.id}>
-            <strong>{item.name}</strong>
+          <article className="live-inventory-item" key={item.id}>
+            <div className="inventory-product-main">
+              <strong>{item.name}</strong>
 
-            {item.quantity && <span>{item.quantity}</span>}
+              {item.status === "low" && (
+                <span className="inventory-low">Low stock</span>
+              )}
+            </div>
 
-            {item.price && <span>{item.price}</span>}
+            <div className="inventory-product-meta">
+              {item.quantity && (
+                <span>{item.quantity}</span>
+              )}
 
-            {item.status === "low" && (
-              <span className="inventory-low">Low stock</span>
-            )}
+              {item.price && (
+                <span>{item.price}</span>
+              )}
+            </div>
+          </article>
+        ))}
+    </div>
+  </section>
+)}
           </div>
         ))}
     </div>
