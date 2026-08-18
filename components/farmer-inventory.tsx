@@ -61,18 +61,19 @@ const loadInventory = useCallback(async () => {
     void loadInventory();
   }, [loadInventory]);
 
-  async function addProduct(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+ async function addProduct(event: FormEvent<HTMLFormElement>) {
+  event.preventDefault();
 
-    const values = new FormData(event.currentTarget);
-    const name = String(values.get("name") ?? "").trim();
+  const values = new FormData(event.currentTarget);
+  const name = String(values.get("name") ?? "").trim();
 
-    if (!name) return;
+  if (!name) return;
 
-    setLoading(true);
-    setError("");
-    setMessage("");
+  setLoading(true);
+  setError("");
+  setMessage("");
 
+  try {
     const { error: insertError } =
       await getBrowserSupabaseClient()
         .from("farm_inventory")
@@ -87,22 +88,31 @@ const loadInventory = useCallback(async () => {
 
     if (insertError) {
       setError(insertError.message);
-    } else {
-      event.currentTarget.reset();
-
-      await getBrowserSupabaseClient()
-        .from("farm_stands")
-        .update({
-          inventory_updated_at: new Date().toISOString(),
-        })
-        .eq("id", farmId);
-
-      setMessage("Product added.");
-      await loadInventory();
+      return;
     }
 
+    event.currentTarget.reset();
+
+    const updatedAt = new Date().toISOString();
+
+    await getBrowserSupabaseClient()
+      .from("farm_stands")
+      .update({
+        inventory_updated_at: updatedAt,
+      })
+      .eq("id", farmId);
+
+    setMessage("Product added.");
+    await loadInventory();
+  } catch (err) {
+    console.error("Unable to add inventory product:", err);
+    setError(
+      "The product was saved, but FarmFinder had trouble refreshing the inventory. Please refresh and try again."
+    );
+  } finally {
     setLoading(false);
   }
+}
 
   async function updateItem(
     item: InventoryItem,
