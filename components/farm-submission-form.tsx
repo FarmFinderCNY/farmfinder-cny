@@ -2,7 +2,6 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
@@ -14,11 +13,6 @@ export function FarmSubmissionForm() {
     event.preventDefault();
     const form = event.currentTarget;
     const values = new FormData(form);
-
-    if (values.get("company_website")) {
-      setStatus("success");
-      return;
-    }
 
     setStatus("submitting");
     setMessage("");
@@ -39,14 +33,17 @@ export function FarmSubmissionForm() {
       contact_email: values.get("contact_email"),
       contact_phone: values.get("contact_phone") || null,
       consent_to_publish: values.get("consent_to_publish") === "on",
+      company_website: values.get("company_website") || "",
     };
 
     try {
-      const { error } = await getBrowserSupabaseClient()
-        .from("farm_stand_submissions")
-        .insert(payload);
+      const response = await fetch("/api/farm-submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error("Submission request failed");
       form.reset();
       setStatus("success");
     } catch (error) {
