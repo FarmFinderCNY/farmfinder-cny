@@ -28,23 +28,48 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [error, setError] = useState("");
-  const [workingId, setWorkingId] = useState<string | null>(null);
+ const loadSubmissions = useCallback(async () => {
+  setLoading(true);
+  setError("");
 
-  const loadSubmissions = useCallback(async () => {
-    setLoading(true);
-    setError("");
+  try {
     const supabase = getBrowserSupabaseClient();
-    const { data: membership } = await supabase.from("admin_users").select("user_id").maybeSingle();
-    if (!membership) {
-      setError("This account is signed in but is not authorized as a FarmFinder administrator.");
-      setLoading(false);
+
+    const { data: membership, error: membershipError } = await supabase
+      .from("admin_users")
+      .select("user_id")
+      .maybeSingle();
+
+    if (membershipError) {
+      setError("Unable to verify administrator access. Please refresh and try again.");
       return;
     }
-    const { data, error: queryError } = await supabase.from("farm_stand_submissions").select("*").order("created_at", { ascending: false });
-    if (queryError) setError(queryError.message);
-    else setSubmissions((data ?? []) as Submission[]);
+
+    if (!membership) {
+      setError(
+        "This account is signed in but is not authorized as a FarmFinder administrator."
+      );
+      return;
+    }
+
+    const { data, error: queryError } = await supabase
+      .from("farm_stand_submissions")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (queryError) {
+      setError("Unable to load farm submissions right now.");
+      return;
+    }
+
+    setSubmissions((data ?? []) as Submission[]);
+  } catch (err) {
+    console.error("Admin dashboard load failed:", err);
+    setError("Unable to connect to FarmFinder right now. Please refresh and try again.");
+  } finally {
     setLoading(false);
-  }, []);
+  }
+}, []);
 
   useEffect(() => {
     const supabase = getBrowserSupabaseClient();
