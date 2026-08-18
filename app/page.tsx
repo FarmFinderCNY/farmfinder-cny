@@ -1,5 +1,5 @@
 import { MapPlaceholder } from "@/components/map-placeholder";
-import { StandCard } from "@/components/stand-card";
+import { StandDirectory } from "@/components/stand-directory";
 import { getActiveFarmStands, hasSupabaseConfig } from "@/lib/supabase";
 import Link from "next/link";
 
@@ -50,7 +50,7 @@ export default async function Home() {
         {configured && stands.length === 0 ? (
           <div className="empty-state"><span>🌱</span><h3>The first listings are taking root.</h3><p>Active farm stands will show here automatically.</p></div>
         ) : (
-          <div className="stand-grid">{stands.map((stand) => <StandCard key={stand.id} stand={stand} />)}</div>
+          <StandDirectory stands={stands} />
         )}
       </section>
 

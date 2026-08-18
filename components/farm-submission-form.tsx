@@ -34,6 +34,7 @@ export function FarmSubmissionForm() {
       website: values.get("website") || null,
       hours: values.get("hours") || null,
       payment_methods: values.get("payment_methods") || null,
+      product_categories: values.getAll("product_categories"),
       contact_name: values.get("contact_name"),
       contact_email: values.get("contact_email"),
       contact_phone: values.get("contact_phone") || null,
@@ -88,6 +89,11 @@ export function FarmSubmissionForm() {
           <label className="form-wide">What do you offer?<textarea name="description" rows={5} maxLength={1000} placeholder="Tell visitors about your produce, products, and farm stand." /></label>
           <label>Hours<textarea name="hours" rows={3} maxLength={300} placeholder="Example: Mon–Sat, 9 AM–6 PM" /></label>
           <label>Payment methods<textarea name="payment_methods" rows={3} maxLength={200} placeholder="Cash, cards, honor system…" /></label>
+          <div className="form-wide category-fieldset"><span>Product categories</span><div className="category-options">
+            {["Produce", "Meat", "Eggs", "Dairy", "Maple", "Honey", "Flowers", "Pumpkins", "Baked goods", "Other"].map((category) => (
+              <label key={category}><input type="checkbox" name="product_categories" value={category} />{category}</label>
+            ))}
+          </div></div>
         </div>
       </fieldset>
 

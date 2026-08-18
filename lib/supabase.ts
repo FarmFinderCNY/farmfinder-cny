@@ -23,7 +23,7 @@ export async function getActiveFarmStands(): Promise<FarmStand[]> {
 
   const { data, error } = await getSupabaseClient()
     .from("farm_stands")
-    .select("id,name,address,city,state,zip_code,latitude,longitude,description,phone,website,hours,payment_methods,is_verified,is_active,created_at")
+    .select("id,name,address,city,state,zip_code,latitude,longitude,description,phone,website,hours,payment_methods,product_categories,photo_url,is_verified,is_active,created_at")
     .eq("is_active", true)
     .order("name", { ascending: true });
 
@@ -33,4 +33,19 @@ export async function getActiveFarmStands(): Promise<FarmStand[]> {
   }
 
   return (data ?? []) as FarmStand[];
+}
+
+export async function getActiveFarmStand(id: string): Promise<FarmStand | null> {
+  if (!hasSupabaseConfig()) return null;
+  const { data, error } = await getSupabaseClient()
+    .from("farm_stands")
+    .select("id,name,address,city,state,zip_code,latitude,longitude,description,phone,website,hours,payment_methods,product_categories,photo_url,is_verified,is_active,created_at")
+    .eq("id", id)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (error) {
+    console.error("Unable to load farm stand:", error.message);
+    return null;
+  }
+  return data as FarmStand | null;
 }
