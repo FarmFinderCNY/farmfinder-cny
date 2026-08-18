@@ -146,7 +146,38 @@ async function requestUpdate(event: FormEvent<HTMLFormElement>) {
     <div className="admin-toolbar"><div><p className="eyebrow">Farmer portal</p><h1>Your listings</h1></div><button onClick={() => void signOut()}>Sign out</button></div>
     {error && <p className="form-error admin-error">{error}</p>}{message && <p className="form-success portal-message">{message}</p>}
     {loading ? <div className="admin-empty">Loading…</div> : <>
-      <section className="portal-section"><h2>Farms you manage</h2>{owned.length === 0 ? <p className="portal-empty">No farms are connected to this account yet.</p> : <div className="portal-farms">{owned.map((farm) => <article key={farm.id}><h3>{farm.name}</h3><p>{farm.city}, {farm.state}</p><button onClick={() => setEditing(farm)}>Request an update</button></article>)}</div>}</section>
+      <section className="portal-section">
+  <h2>Farms you manage</h2>
+
+  {owned.length === 0 ? (
+    <p className="portal-empty">
+      No farms are connected to this account yet.
+    </p>
+  ) : (
+    <div className="portal-farms">
+      {owned.map((farm) => (
+        <article key={farm.id}>
+          <h3>{farm.name}</h3>
+          <p>
+            {farm.city}, {farm.state}
+          </p>
+
+          <button
+            type="button"
+            onClick={() => setEditing(farm)}
+          >
+            Request an update
+          </button>
+
+          <FarmerInventory
+            farmId={farm.id}
+            farmName={farm.name}
+          />
+        </article>
+      ))}
+    </div>
+  )}
+</section>
       <section className="portal-section"><h2>Claim an existing listing</h2><p>Choose only a farm you own or officially represent. Claims require administrator approval.</p><div className="portal-farms">{
         claimable
   .filter((farm) => !requestedFarmId || farm.id === requestedFarmId)
