@@ -1,5 +1,5 @@
 "use client";
-
+import { FarmerInventory } from "@/components/farmer-inventory";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
