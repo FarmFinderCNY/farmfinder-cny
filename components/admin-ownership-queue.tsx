@@ -24,7 +24,7 @@ export function AdminOwnershipQueue() {
   const load = useCallback(async () => {
     const supabase = getBrowserSupabaseClient();
     const [{ data: claimData, error: claimError }, { data: updateData, error: updateError }] = await Promise.all([
-      supabase.from("farm_claim_requests").select(".select("id,farm_id,requested_by,message,status,created_at,claimant_name,claimant_email,claimant_phone,claimant_role,verification_notes,farm_stands(name,city)")"),
+      supabase.from("farm_claim_requests").select("id,farm_id,requested_by,message,status,created_at,claimant_name,claimant_email,claimant_phone,claimant_role,verification_notes,farm_stands(name,city)")"),
       supabase.from("farm_update_requests").select("id,farm_id,name,address,city,state,zip_code,description,phone,website,hours,payment_methods,status,created_at").eq("status", "pending").order("created_at"),
     ]);
     if (claimError || updateError) setError(claimError?.message ?? updateError?.message ?? "Unable to load requests.");
