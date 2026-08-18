@@ -36,7 +36,36 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
           {stand.payment_methods && <><dt>Payment</dt><dd>{stand.payment_methods}</dd></>}
           {stand.phone && <><dt>Phone</dt><dd><a href={`tel:${stand.phone}`}>{stand.phone}</a></dd></>}
         </dl>
-        <div className="detail-actions"><a className="primary-button" href={directions} target="_blank" rel="noreferrer">Get directions <span>↗</span></a>{website && <a className="text-button" href={website} target="_blank" rel="noreferrer">Visit website ↗</a>}</div>
+       <div className="detail-actions">
+  <a
+    className="primary-button"
+    href={directions}
+    target="_blank"
+    rel="noreferrer"
+  >
+    Get directions <span>↗</span>
+  </a>
+
+  {website && (
+    <a
+      className="text-button"
+      href={website}
+      target="_blank"
+      rel="noreferrer"
+    >
+      Visit website ↗
+    </a>
+  )}
+
+  {!stand.owner_user_id && (
+    <Link
+      className="text-button"
+      href={`/farms/${stand.id}/claim`}
+    >
+      🌾 Own this farm? Claim it
+    </Link>
+  )}
+</div>
       </div>
       {stand.photo_url
         ? <div className="farm-detail-visual has-photo"><img src={stand.photo_url} alt={`${stand.name} farm`} /></div>
