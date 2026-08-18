@@ -18,4 +18,16 @@ export type FarmStand = {
   is_verified: boolean;
   is_active: boolean;
   created_at: string;
+  inventory_updated_at: string | null;
+
+inventory: {
+  id: string;
+  farm_id: string;
+  name: string;
+  price: string | null;
+  quantity: string | null;
+  status: "available" | "low" | "sold_out";
+  sort_order: number | null;
+  updated_at: string;
+}[];
 };
