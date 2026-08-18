@@ -41,3 +41,7 @@ The app includes an interactive Leaflet map using OpenStreetMap tiles. Active st
 ## Farmer submissions
 
 The `/list-your-farm` page sends new listings to the protected `farm_stand_submissions` table with a pending status. Public users may insert submissions but cannot read the table. Review pending rows in Supabase before copying approved public information into `farm_stands`.
+
+## Installable app
+
+FarmFinder CNY includes a web app manifest, branded icons, standalone display settings, and a service worker for static assets. Compatible browsers can install it to a phone or computer home screen. Private admin and farmer-portal pages are deliberately excluded from service-worker caching.
