@@ -28,7 +28,7 @@ export function FarmerPortal() {
     setUserId(id);
     const [{ data: farmData, error: farmError }, { data: claimData, error: claimError }] = await Promise.all([
       supabase.from("farm_stands").select("id,name,address,city,state,zip_code,latitude,longitude,description,phone,website,hours,payment_methods,product_categories,photo_url,is_verified,is_active,created_at,owner_user_id").eq("is_active", true).order("name"),
-      supabase.from("farm_claim_requests").select("id,farm_id,status,created_at").order("created_at", { ascending: false }),
+      supabase.from("farm_claim_requests").select("id,owner_user_id,name,address,city,state,zip_code,...
     ]);
     if (farmError || claimError) setError(farmError?.message ?? claimError?.message ?? "Unable to load portal.");
     setFarms((farmData ?? []) as FarmStand[]); setClaims((claimData ?? []) as Claim[]); setLoading(false);
