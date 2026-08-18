@@ -19,7 +19,7 @@ export function StandCard({ stand }: { stand: FarmStand }) {
       <p className="location">{location || "Central New York"}</p>
       {stand.description && <p className="description">{stand.description}</p>}
       {stand.inventory && stand.inventory.length > 0 && (
-  <div className="live-inventory">
+ <section className="live-inventory">
     <div className="live-inventory-heading">
       <strong>Available now</strong>
 
