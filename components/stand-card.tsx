@@ -19,20 +19,9 @@ export function StandCard({ stand }: { stand: FarmStand }) {
       <p className="location">{location || "Central New York"}</p>
       {stand.description && <p className="description">{stand.description}</p>}
       {stand.inventory && stand.inventory.length > 0 && (
- <section className="live-inventory">
-    <div className="live-inventory-heading">
-      <strong>Available now</strong>
+ 
 
-      {stand.inventory_updated_at && (
-        <span>
-          Updated{" "}
-          {new Date(stand.inventory_updated_at).toLocaleString()}
-        </span>
-      )}
-    </div>
-
-    <div className="live-inventory-items">
-    {stand.inventory && stand.inventory.length > 0 && (
+    
   <section className="live-inventory">
     <div className="live-inventory-heading">
       <div>
