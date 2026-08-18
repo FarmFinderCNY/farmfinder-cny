@@ -53,45 +53,7 @@ export function AdminOwnershipQueue() {
   }
   if (!active) return null;
   return <section className="ownership-admin"><div className="queue-title"><div><p className="eyebrow">Ownership and updates</p><h2>Farmer requests</h2></div><button onClick={() => void load()}>Refresh</button></div>{error && <p className="form-error admin-error">{error}</p>}
-    <h3>Ownership claims</h3>{claims.length === 0 ? <p className="portal-empty">No ownership claims are pending.</p> : <div className="submission-queue">{claims.map((claim) => <article className="review-card" key={claim.id}><span className="pending-badge">Claim pending</span><h2>{claim.farm_stands?.name ?? "Farm listing"}</h2><p>{claim.farm_stands?.city}</p>{claim.message && <div className="review-details">
-  {claim.claimant_name && (
-    <>
-      <dt>Name</dt>
-      <dd>{claim.claimant_name}</dd>
-    </>
-  )}
-
-  {claim.claimant_email && (
-    <>
-      <dt>Email</dt>
-      <dd>{claim.claimant_email}</dd>
-    </>
-  )}
-
-  {claim.claimant_phone && (
-    <>
-      <dt>Phone</dt>
-      <dd>{claim.claimant_phone}</dd>
-    </>
-  )}
-
-  {claim.claimant_role && (
-    <>
-      <dt>Relationship</dt>
-      <dd>{claim.claimant_role}</dd>
-    </>
-  )}
-
-  {claim.verification_notes && (
-    <>
-      <dt>Verification details</dt>
-      <dd>{claim.verification_notes}</dd>
-    </>
-  )}
-
-  <dt>Account ID</dt>
-  <dd>{claim.requested_by}</dd>
-</div><div className="review-actions"><button className="reject-button" disabled={working === claim.id} onClick={() => void decide("claim", "reject", claim.id)}>Reject</button><button className="approve-button" disabled={working === claim.id} onClick={() => void decide("claim", "approve", claim.id)}>Approve ownership</button></div></article>)}</div>}
+   
     <h3>Ownership claims</h3>
 
 {claims.length === 0 ? (
