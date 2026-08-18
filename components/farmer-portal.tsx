@@ -19,7 +19,7 @@ export function FarmerPortal() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [editing, setEditing] = useState<FarmStand | null>(null);
-
+  const [claiming, setClaiming] = useState<FarmStand | null>(null);
   const loadPortal = useCallback(async () => {
     setLoading(true); setError("");
     const supabase = getBrowserSupabaseClient();
@@ -100,7 +100,7 @@ export function FarmerPortal() {
       <section className="portal-section"><h2>Claim an existing listing</h2><p>Choose only a farm you own or officially represent. Claims require administrator approval.</p><div className="portal-farms">{
         claimable
   .filter((farm) => !requestedFarmId || farm.id === requestedFarmId)
-  .map((farm) => <article key={farm.id}><h3>{farm.name}</h3><p>{farm.city}, {farm.state}</p><button disabled={claimedIds.has(farm.id)} onClick={() => void claimFarm(farm)}>{claimedIds.has(farm.id) ? "Claim pending" : "Request ownership"}</button></article>)}</div></section>
+  .map((farm) => <article key={farm.id}><h3>{farm.name}</h3><p>{farm.city}, {farm.state}</p><button disabled={claimedIds.has(farm.id)}onClick={() => setClaiming(farm)}}>{claimedIds.has(farm.id) ? "Claim pending" : "Request ownership"}</button></article>)}</div></section>
     </>}
     {editing && <div className="portal-modal" role="dialog" aria-modal="true"><form onSubmit={requestUpdate}><div className="modal-heading"><h2>Update {editing.name}</h2><button type="button" onClick={() => setEditing(null)}>×</button></div><div className="form-grid">
       <label className="form-wide">Farm name<input name="name" defaultValue={editing.name} required /></label><label className="form-wide">Address<input name="address" defaultValue={editing.address ?? ""} required /></label><label>City<input name="city" defaultValue={editing.city ?? ""} required /></label><label>State<input name="state" defaultValue={editing.state ?? "NY"} required /></label><label>ZIP<input name="zip_code" defaultValue={editing.zip_code ?? ""} required /></label><label>Phone<input name="phone" defaultValue={editing.phone ?? ""} /></label><label className="form-wide">Website<input name="website" defaultValue={editing.website ?? ""} /></label><label className="form-wide">Description<textarea name="description" defaultValue={editing.description ?? ""} rows={4} /></label><label>Hours<textarea name="hours" defaultValue={editing.hours ?? ""} rows={3} /></label><label>Payment methods<textarea name="payment_methods" defaultValue={editing.payment_methods ?? ""} rows={3} /></label>
