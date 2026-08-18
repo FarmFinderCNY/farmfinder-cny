@@ -89,7 +89,43 @@ export function FarmerPortal() {
 
   setLoading(false);
 }
+async function requestUpdate(event: FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+  if (!editing) return;
 
+  const values = new FormData(event.currentTarget);
+
+  setLoading(true);
+  setError("");
+
+  const payload = {
+    farm_id: editing.id,
+    name: values.get("name"),
+    address: values.get("address"),
+    city: values.get("city"),
+    state: values.get("state"),
+    zip_code: values.get("zip_code"),
+    description: values.get("description"),
+    phone: values.get("phone"),
+    website: values.get("website"),
+    hours: values.get("hours"),
+    payment_methods: values.get("payment_methods"),
+  };
+
+  const { error: updateError } = await getBrowserSupabaseClient()
+    .from("farm_update_requests")
+    .insert(payload);
+
+  if (updateError) {
+    setError(updateError.message);
+  } else {
+    setMessage("Update request submitted for administrator review.");
+    setEditing(null);
+    await loadPortal();
+  }
+
+  setLoading(false);
+}
   async function signOut() { await getBrowserSupabaseClient().auth.signOut(); setSignedIn(false); setFarms([]); }
 
   if (!signedIn) return <form className="admin-login farmer-login" onSubmit={authenticate}>
