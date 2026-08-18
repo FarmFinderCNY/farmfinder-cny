@@ -11,7 +11,7 @@ export default function ListYourFarmPage() {
     <main>
       <nav className="nav shell" aria-label="Main navigation">
         <Link className="brand" href="/"><span>FF</span> FarmFinder <b>CNY</b></Link>
-        <Link className="nav-link" href="/">← Back to farm stands</Link>
+        <div className="nav-actions"><Link className="nav-link" href="/farmer">Farmer sign in</Link><Link className="nav-link" href="/">← Farm stands</Link></div>
       </nav>
       <header className="submission-hero shell">
         <p className="eyebrow">Join the local directory</p>

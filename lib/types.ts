@@ -14,6 +14,7 @@ export type FarmStand = {
   payment_methods: string | null;
   product_categories: string[];
   photo_url: string | null;
+  owner_user_id?: string | null;
   is_verified: boolean;
   is_active: boolean;
   created_at: string;
