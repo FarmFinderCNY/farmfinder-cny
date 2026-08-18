@@ -1,6 +1,7 @@
 import { MapPlaceholder } from "@/components/map-placeholder";
 import { StandCard } from "@/components/stand-card";
 import { getActiveFarmStands, hasSupabaseConfig } from "@/lib/supabase";
+import Link from "next/link";
 
 export const revalidate = 300;
 
@@ -12,7 +13,7 @@ export default async function Home() {
     <main>
       <nav className="nav shell" aria-label="Main navigation">
         <a className="brand" href="#top"><span>FF</span> FarmFinder <b>CNY</b></a>
-        <a className="nav-link" href="#stands">Browse stands</a>
+        <div className="nav-actions"><a className="nav-link" href="#stands">Browse stands</a><Link className="nav-link nav-submit" href="/list-your-farm">List your farm</Link></div>
       </nav>
 
       <header id="top" className="hero shell">
@@ -20,7 +21,7 @@ export default async function Home() {
           <p className="eyebrow">Grown nearby · Shared locally</p>
           <h1>Fresh food,<br /><em>close to home.</em></h1>
           <p className="lede">Find farm stands, roadside markets, and honest local food throughout Central New York.</p>
-          <a className="primary-button" href="#stands">Find a farm stand <span>↓</span></a>
+          <div className="hero-actions"><a className="primary-button" href="#stands">Find a farm stand <span>↓</span></a><Link className="text-button" href="/list-your-farm">I’m a farmer — list my stand →</Link></div>
         </div>
         <div className="hero-art" aria-hidden="true">
           <div className="sun" />

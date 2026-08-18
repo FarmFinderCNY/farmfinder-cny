@@ -37,3 +37,7 @@ No other build settings are required.
 ## Map integration
 
 The app includes an interactive Leaflet map using OpenStreetMap tiles. Active stands with both latitude and longitude appear automatically as clickable pins; listings without coordinates remain visible in the stand list but are omitted from the map.
+
+## Farmer submissions
+
+The `/list-your-farm` page sends new listings to the protected `farm_stand_submissions` table with a pending status. Public users may insert submissions but cannot read the table. Review pending rows in Supabase before copying approved public information into `farm_stands`.

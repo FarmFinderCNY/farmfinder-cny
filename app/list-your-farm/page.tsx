@@ -1,0 +1,39 @@
+import Link from "next/link";
+import { FarmSubmissionForm } from "@/components/farm-submission-form";
+
+export const metadata = {
+  title: "List Your Farm | FarmFinder CNY",
+  description: "Submit a Central New York farm stand for review.",
+};
+
+export default function ListYourFarmPage() {
+  return (
+    <main>
+      <nav className="nav shell" aria-label="Main navigation">
+        <Link className="brand" href="/"><span>FF</span> FarmFinder <b>CNY</b></Link>
+        <Link className="nav-link" href="/">← Back to farm stands</Link>
+      </nav>
+      <header className="submission-hero shell">
+        <p className="eyebrow">Join the local directory</p>
+        <h1>List your<br /><em>farm stand.</em></h1>
+        <p>Help neighbors find what you grow. Submit your information for review—there’s no fee to be considered for the directory.</p>
+      </header>
+      <section className="form-shell shell">
+        <aside>
+          <p className="eyebrow">Before you begin</p>
+          <h2>What happens next?</h2>
+          <ol>
+            <li><span>1</span><p><strong>You submit</strong>Your listing stays private while it’s pending.</p></li>
+            <li><span>2</span><p><strong>We review</strong>We verify the information and map location.</p></li>
+            <li><span>3</span><p><strong>CNY finds you</strong>Approved listings appear on the stand list and map.</p></li>
+          </ol>
+        </aside>
+        <FarmSubmissionForm />
+      </section>
+      <footer className="footer shell">
+        <Link className="brand" href="/"><span>FF</span> FarmFinder <b>CNY</b></Link>
+        <p>Helping Central New York find food grown closer to home.</p>
+      </footer>
+    </main>
+  );
+}
