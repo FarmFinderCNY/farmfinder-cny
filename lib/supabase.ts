@@ -23,7 +23,7 @@ export async function getActiveFarmStands(): Promise<FarmStand[]> {
 
   const { data, error } = await getSupabaseClient()
     .from("farm_stands")
-    .select("id,name,address,city,state,zip_code,latitude,longitude,description,phone,website,hours,payment_methods,product_categories,photo_url,is_verified,is_active,created_at")
+    .select("id,name,address,city,state,zip_code,latitude,longitude,description,phone,website,hours,payment_methods,product_categories,photo_url,is_verified,is_active,created_at,inventory_updated_at,inventory:farm_inventory(id,farm_id,name,price,quantity,status,sort_order,updated_at)")
     .eq("is_active", true)
     .order("name", { ascending: true });
 
