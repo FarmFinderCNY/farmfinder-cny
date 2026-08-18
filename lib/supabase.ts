@@ -39,7 +39,7 @@ export async function getActiveFarmStand(id: string): Promise<FarmStand | null> 
   if (!hasSupabaseConfig()) return null;
   const { data, error } = await getSupabaseClient()
     .from("farm_stands")
-    .select("id,.select("id,owner_user_id,name,address,city,state,zip_code,latitude,longitude,description,phone,website,hours,payment_methods,product_categories,photo_url,is_verified,is_active,created_at")
+    ..select("id,owner_user_id,name,address,city,state,zip_code,latitude,longitude,description,phone,website,hours,payment_methods,product_categories,photo_url,is_verified,is_active,created_at,inventory_updated_at,stand_status,status_note,status_updated_at,inventory:farm_inventory(id,farm_id,name,price,quantity,status,sort_order,updated_at)")
     .eq("id", id)
     .eq("is_active", true)
     .maybeSingle();
