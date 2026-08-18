@@ -92,6 +92,154 @@ export function AdminOwnershipQueue() {
   <dt>Account ID</dt>
   <dd>{claim.requested_by}</dd>
 </div><div className="review-actions"><button className="reject-button" disabled={working === claim.id} onClick={() => void decide("claim", "reject", claim.id)}>Reject</button><button className="approve-button" disabled={working === claim.id} onClick={() => void decide("claim", "approve", claim.id)}>Approve ownership</button></div></article>)}</div>}
-    <h3>Listing updates</h3>{updates.length === 0 ? <p className="portal-empty">No listing updates are pending.</p> : <div className="submission-queue">{updates.map((update) => <article className="review-card" key={update.id}><span className="pending-badge">Update pending</span><h2>{update.name}</h2><p>{update.address}, {update.city}, {update.state} {update.zip_code}</p>{update.description && <p className="review-description">{update.description}</p>}<dl className="review-details">{update.hours && <><dt>Hours</dt><dd>{update.hours}</dd></>}{update.phone && <><dt>Phone</dt><dd>{update.phone}</dd></>}{update.website && <><dt>Website</dt><dd>{update.website}</dd></>}</dl><div className="review-actions"><button className="reject-button" disabled={working === update.id} onClick={() => void decide("update", "reject", update.id)}>Reject</button><button className="approve-button" disabled={working === update.id} onClick={() => void decide("update", "approve", update.id)}>Approve changes</button></div></article>)}</div>}
+    <h3>Ownership claims</h3>
+
+{claims.length === 0 ? (
+  <p className="portal-empty">No ownership claims are pending.</p>
+) : (
+  <div className="review-list">
+    {claims.map((claim) => (
+      <article className="review-card" key={claim.id}>
+        <span className="review-badge">Claim pending</span>
+
+        <h2>{claim.farm_stands?.name}</h2>
+
+        {claim.farm_stands?.city && (
+          <p>{claim.farm_stands.city}</p>
+        )}
+
+        <dl className="review-details">
+          {claim.claimant_name && (
+            <>
+              <dt>Name</dt>
+              <dd>{claim.claimant_name}</dd>
+            </>
+          )}
+
+          {claim.claimant_email && (
+            <>
+              <dt>Email</dt>
+              <dd>{claim.claimant_email}</dd>
+            </>
+          )}
+
+          {claim.claimant_phone && (
+            <>
+              <dt>Phone</dt>
+              <dd>{claim.claimant_phone}</dd>
+            </>
+          )}
+
+          {claim.claimant_role && (
+            <>
+              <dt>Relationship</dt>
+              <dd>{claim.claimant_role}</dd>
+            </>
+          )}
+
+          {claim.verification_notes && (
+            <>
+              <dt>Verification details</dt>
+              <dd>{claim.verification_notes}</dd>
+            </>
+          )}
+
+          <dt>Account ID</dt>
+          <dd>{claim.requested_by}</dd>
+        </dl>
+
+        <div className="review-actions">
+          <button
+            className="reject-button"
+            disabled={working === claim.id}
+            onClick={() => void decide("claim", "reject", claim.id)}
+          >
+            Reject
+          </button>
+
+          <button
+            className="approve-button"
+            disabled={working === claim.id}
+            onClick={() => void decide("claim", "approve", claim.id)}
+          >
+            Approve ownership
+          </button>
+        </div>
+      </article>
+    ))}
+  </div>
+)}
+
+ <h3>Listing updates</h3>
+
+{updates.length === 0 ? (
+  <p className="portal-empty">No listing updates are pending.</p>
+) : (
+  <div className="submission-queue">
+    {updates.map((update) => (
+      <article className="review-card" key={update.id}>
+        <span className="review-badge">Update pending</span>
+
+        <h2>{update.name}</h2>
+
+        <p>
+          {update.address}, {update.city}, {update.state} {update.zip_code}
+        </p>
+
+        {update.description && (
+          <p className="review-description">{update.description}</p>
+        )}
+
+        <dl className="review-details">
+          {update.hours && (
+            <>
+              <dt>Hours</dt>
+              <dd>{update.hours}</dd>
+            </>
+          )}
+
+          {update.phone && (
+            <>
+              <dt>Phone</dt>
+              <dd>{update.phone}</dd>
+            </>
+          )}
+
+          {update.website && (
+            <>
+              <dt>Website</dt>
+              <dd>{update.website}</dd>
+            </>
+          )}
+
+          {update.payment_methods && (
+            <>
+              <dt>Payment</dt>
+              <dd>{update.payment_methods}</dd>
+            </>
+          )}
+        </dl>
+
+        <div className="review-actions">
+          <button
+            className="reject-button"
+            disabled={working === update.id}
+            onClick={() => void decide("update", "reject", update.id)}
+          >
+            Reject
+          </button>
+
+          <button
+            className="approve-button"
+            disabled={working === update.id}
+            onClick={() => void decide("update", "approve", update.id)}
+          >
+            Approve update
+          </button>
+        </div>
+      </article>
+    ))}
+  </div>
+)}     
   </section>;
 }
