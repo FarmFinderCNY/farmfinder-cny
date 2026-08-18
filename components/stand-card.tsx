@@ -18,6 +18,39 @@ export function StandCard({ stand }: { stand: FarmStand }) {
       <h3>{stand.name}</h3>
       <p className="location">{location || "Central New York"}</p>
       {stand.description && <p className="description">{stand.description}</p>}
+      {stand.inventory && stand.inventory.length > 0 && (
+  <div className="live-inventory">
+    <div className="live-inventory-heading">
+      <strong>Available now</strong>
+
+      {stand.inventory_updated_at && (
+        <span>
+          Updated{" "}
+          {new Date(stand.inventory_updated_at).toLocaleString()}
+        </span>
+      )}
+    </div>
+
+    <div className="live-inventory-items">
+      {stand.inventory
+        .filter((item) => item.status !== "sold_out")
+        .slice(0, 4)
+        .map((item) => (
+          <div className="live-inventory-item" key={item.id}>
+            <strong>{item.name}</strong>
+
+            {item.quantity && <span>{item.quantity}</span>}
+
+            {item.price && <span>{item.price}</span>}
+
+            {item.status === "low" && (
+              <span className="inventory-low">Low stock</span>
+            )}
+          </div>
+        ))}
+    </div>
+  </div>
+)}
       {stand.product_categories.length > 0 && <div className="category-chips">{stand.product_categories.slice(0, 4).map((category) => <span key={category}>{category}</span>)}</div>}
       <dl>
         {stand.hours && <><dt>Hours</dt><dd>{stand.hours}</dd></>}
