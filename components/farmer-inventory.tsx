@@ -26,10 +26,11 @@ export function FarmerInventory({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const loadInventory = useCallback(async () => {
-    setLoading(true);
-    setError("");
+const loadInventory = useCallback(async () => {
+  setLoading(true);
+  setError("");
 
+  try {
     const { data, error: inventoryError } =
       await getBrowserSupabaseClient()
         .from("farm_inventory")
@@ -42,12 +43,19 @@ export function FarmerInventory({
 
     if (inventoryError) {
       setError(inventoryError.message);
-    } else {
-      setItems((data ?? []) as InventoryItem[]);
+      return;
     }
 
+    setItems((data ?? []) as InventoryItem[]);
+  } catch (err) {
+    console.error("Unable to load farm inventory:", err);
+    setError(
+      "Unable to load inventory right now. Please refresh and try again."
+    );
+  } finally {
     setLoading(false);
-  }, [farmId]);
+  }
+}, [farmId]);
 
   useEffect(() => {
     void loadInventory();
