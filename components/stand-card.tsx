@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import type { FarmStand } from "@/lib/types";
 import Link from "next/link";
 
@@ -9,7 +10,7 @@ export function StandCard({ stand }: { stand: FarmStand }) {
 
   return (
     <article className="stand-card">
-      {stand.photo_url && <div className="stand-photo" style={{ backgroundImage: `url("${stand.photo_url}")` }} role="img" aria-label={`${stand.name} farm`} />}
+      {stand.photo_url && <img className="stand-photo" src={stand.photo_url} alt={`${stand.name} farm`} />}
       <div className="card-topline">
         <span className="status"><i /> Open listing</span>
         {stand.is_verified && <span className="verified">✓ Verified</span>}

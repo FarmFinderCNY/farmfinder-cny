@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -37,7 +38,9 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
         </dl>
         <div className="detail-actions"><a className="primary-button" href={directions} target="_blank" rel="noreferrer">Get directions <span>↗</span></a>{website && <a className="text-button" href={website} target="_blank" rel="noreferrer">Visit website ↗</a>}</div>
       </div>
-      <div className={`farm-detail-visual ${stand.photo_url ? "has-photo" : ""}`} style={stand.photo_url ? { backgroundImage: `url("${stand.photo_url}")` } : undefined}><span>{stand.photo_url ? "" : "Grown in Central New York"}</span></div>
+      {stand.photo_url
+        ? <div className="farm-detail-visual has-photo"><img src={stand.photo_url} alt={`${stand.name} farm`} /></div>
+        : <div className="farm-detail-visual"><span>Grown in Central New York</span></div>}
     </article>
     <footer className="footer shell"><Link className="brand" href="/"><span>FF</span> FarmFinder <b>CNY</b></Link><p>Helping Central New York find food grown closer to home.</p></footer>
   </main>;
