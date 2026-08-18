@@ -58,23 +58,37 @@ export function FarmerPortal() {
     setLoading(false);
   }
 
-  async function claimFarm(farm: FarmStand) {
-    const note = window.prompt(`Tell us how you are connected to ${farm.name}. Do not include a password.`);
-    if (note === null) return;
-    setLoading(true); setError("");
-    const { error: claimError } = await getBrowserSupabaseClient().from("farm_claim_requests").insert({ farm_id: farm.id, message: note });
-    if (claimError) setError(claimError.message); else { setMessage("Ownership request submitted for administrator review."); await loadPortal(); }
-    setLoading(false);
+ async function claimFarm(event: FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+  if (!claiming) return;
+
+  const values = new FormData(event.currentTarget);
+
+  setLoading(true);
+  setError("");
+
+  const { error: claimError } = await getBrowserSupabaseClient()
+    .from("farm_claim_requests")
+    .insert({
+      farm_id: claiming.id,
+      claimant_name: values.get("claimant_name"),
+      claimant_email: values.get("claimant_email"),
+      claimant_phone: values.get("claimant_phone"),
+      claimant_role: values.get("claimant_role"),
+      verification_notes: values.get("verification_notes"),
+      message: values.get("verification_notes"),
+    });
+
+  if (claimError) {
+    setError(claimError.message);
+  } else {
+    setMessage("Ownership request submitted for administrator review.");
+    setClaiming(null);
+    await loadPortal();
   }
 
-  async function requestUpdate(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); if (!editing) return;
-    const values = new FormData(event.currentTarget); setLoading(true); setError("");
-    const payload = { farm_id: editing.id, name: values.get("name"), address: values.get("address"), city: values.get("city"), state: values.get("state"), zip_code: values.get("zip_code"), description: values.get("description") || null, phone: values.get("phone") || null, website: values.get("website") || null, hours: values.get("hours") || null, payment_methods: values.get("payment_methods") || null, product_categories: editing.product_categories };
-    const { error: updateError } = await getBrowserSupabaseClient().from("farm_update_requests").insert(payload);
-    if (updateError) setError(updateError.message); else { setMessage("Update request submitted for administrator review."); setEditing(null); }
-    setLoading(false);
-  }
+  setLoading(false);
+}
 
   async function signOut() { await getBrowserSupabaseClient().auth.signOut(); setSignedIn(false); setFarms([]); }
 
@@ -102,6 +116,56 @@ export function FarmerPortal() {
   .filter((farm) => !requestedFarmId || farm.id === requestedFarmId)
   .map((farm) => <article key={farm.id}><h3>{farm.name}</h3><p>{farm.city}, {farm.state}</p><button disabled={claimedIds.has(farm.id)}onClick={() => setClaiming(farm)}>{claimedIds.has(farm.id) ? "Claim pending" : "Request ownership"}</button></article>)}</div></section>
     </>}
+    {claiming && (
+  <div className="portal-modal" role="dialog" aria-modal="true">
+    <form onSubmit={claimFarm}>
+      <div className="modal-heading">
+        <h2>Claim {claiming.name}</h2>
+        <button type="button" onClick={() => setClaiming(null)}>
+          Close
+        </button>
+      </div>
+
+      <label>
+        Your name
+        <input name="claimant_name" required />
+      </label>
+
+      <label>
+        Email
+        <input name="claimant_email" type="email" required />
+      </label>
+
+      <label>
+        Phone
+        <input name="claimant_phone" type="tel" />
+      </label>
+
+      <label>
+        Relationship to the farm
+        <input
+          name="claimant_role"
+          placeholder="Owner, manager, family member..."
+          required
+        />
+      </label>
+
+      <label className="form-wide">
+        Verification details
+        <textarea
+          name="verification_notes"
+          rows={5}
+          placeholder="Tell us how we can verify your connection to this farm. Do not include passwords."
+          required
+        />
+      </label>
+
+      <button className="submit-button" disabled={loading}>
+        {loading ? "Submitting..." : "Submit ownership claim"}
+      </button>
+    </form>
+  </div>
+)}
     {editing && <div className="portal-modal" role="dialog" aria-modal="true"><form onSubmit={requestUpdate}><div className="modal-heading"><h2>Update {editing.name}</h2><button type="button" onClick={() => setEditing(null)}>×</button></div><div className="form-grid">
       <label className="form-wide">Farm name<input name="name" defaultValue={editing.name} required /></label><label className="form-wide">Address<input name="address" defaultValue={editing.address ?? ""} required /></label><label>City<input name="city" defaultValue={editing.city ?? ""} required /></label><label>State<input name="state" defaultValue={editing.state ?? "NY"} required /></label><label>ZIP<input name="zip_code" defaultValue={editing.zip_code ?? ""} required /></label><label>Phone<input name="phone" defaultValue={editing.phone ?? ""} /></label><label className="form-wide">Website<input name="website" defaultValue={editing.website ?? ""} /></label><label className="form-wide">Description<textarea name="description" defaultValue={editing.description ?? ""} rows={4} /></label><label>Hours<textarea name="hours" defaultValue={editing.hours ?? ""} rows={3} /></label><label>Payment methods<textarea name="payment_methods" defaultValue={editing.payment_methods ?? ""} rows={3} /></label>
     </div><button className="submit-button" disabled={loading}>Submit update for review</button></form></div>}
