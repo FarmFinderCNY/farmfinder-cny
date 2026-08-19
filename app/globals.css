@@ -165,3 +165,41 @@ h1 em { color:var(--orange); font-weight:450; }
     align-items: flex-start;
   }
 }
+/* Farmer inventory form cleanup */
+
+.inventory-add-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.inventory-add-form .inventory-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
+  font-weight: 600;
+}
+
+.inventory-add-form .inventory-field input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #b8b8a8;
+  border-radius: 8px;
+  font: inherit;
+  background: #fff;
+}
+
+.inventory-add-form .inventory-field input:focus {
+  outline: 2px solid #174c36;
+  outline-offset: 1px;
+}
+
+.inventory-add-form .inventory-add-button {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
