@@ -219,7 +219,7 @@ const loadInventory = useCallback(async () => {
       )}
 
       <form onSubmit={addProduct} className="inventory-add-form">
-        <label>
+<label className="inventory-field">
           Product
           <input
             name="name"
@@ -228,7 +228,7 @@ const loadInventory = useCallback(async () => {
           />
         </label>
 
-        <label>
+      <label className="inventory-field">
           Quantity
           <input
             name="quantity"
@@ -236,7 +236,7 @@ const loadInventory = useCallback(async () => {
           />
         </label>
 
-        <label>
+      <label className="inventory-field">
           Price
           <input
             name="price"
@@ -245,7 +245,7 @@ const loadInventory = useCallback(async () => {
         </label>
 
         <button
-          className="submit-button"
+         className="submit-button inventory-add-button"
           disabled={loading}
         >
           Add product
