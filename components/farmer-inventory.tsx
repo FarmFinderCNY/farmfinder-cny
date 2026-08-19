@@ -265,18 +265,25 @@ const loadInventory = useCallback(async () => {
               className={`inventory-manager-item product-${item.status}`}
               key={item.id}
             >
-              <div>
-                <strong>{item.name}</strong>
+ <div className="inventory-item-details">
+  <strong className="inventory-item-name">
+    {item.name}
+  </strong>
 
-                {item.quantity && (
-                  <span>{item.quantity}</span>
-                )}
+  {item.quantity && (
+    <div className="inventory-item-meta">
+      <span className="inventory-item-label">Quantity</span>
+      <span>{item.quantity}</span>
+    </div>
+  )}
 
-                {item.price && (
-                  <span>{item.price}</span>
-                )}
-              </div>
-
+  {item.price && (
+    <div className="inventory-item-meta">
+      <span className="inventory-item-label">Price</span>
+      <span>{item.price}</span>
+    </div>
+  )}
+</div>
               <div className="inventory-status-buttons">
                 <button
                   type="button"
