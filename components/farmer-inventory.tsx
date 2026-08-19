@@ -226,7 +226,7 @@ const loadInventory = useCallback(async () => {
             placeholder="Sweet corn"
             required
           />
-        </label>
+   </label>
 
       <label className="inventory-field">
           Quantity
@@ -234,7 +234,7 @@ const loadInventory = useCallback(async () => {
             name="quantity"
             placeholder="Plenty, 12 dozen, 20 bags..."
           />
-        </label>
+  </label>
 
       <label className="inventory-field">
           Price
@@ -242,7 +242,7 @@ const loadInventory = useCallback(async () => {
             name="price"
             placeholder="$6/dozen"
           />
-        </label>
+    </label>
 
         <button
          className="submit-button inventory-add-button"
