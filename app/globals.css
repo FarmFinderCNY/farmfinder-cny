@@ -203,3 +203,16 @@ h1 em { color:var(--orange); font-weight:450; }
   width: 100%;
   margin-top: 4px;
 }
+/* Inventory detail spacing */
+
+.inventory-item-meta {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  column-gap: 16px;
+  align-items: baseline;
+  width: 100%;
+}
+
+.inventory-item-meta > span:last-child {
+  font-weight: 600;
+}
