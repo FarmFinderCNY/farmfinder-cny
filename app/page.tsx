@@ -36,7 +36,9 @@ export default async function Home() {
       <div className="marquee" aria-hidden="true">
         <span>FARM FRESH</span><i>✦</i><span>LOCALLY GROWN</span><i>✦</i><span>COMMUNITY ROOTED</span><i>✦</i><span>CNY PROUD</span>
       </div>
-
+ <div className="shell">
+   <MapPlaceholder stands={stands} />
+ </div>
       <section id="stands" className="stands-section shell">
         <div className="section-heading">
           <div><p className="eyebrow">The stand list</p><h2>Local finds, all in one place.</h2></div>
@@ -54,7 +56,7 @@ export default async function Home() {
         )}
       </section>
 
-      <div className="shell"><MapPlaceholder stands={stands} /></div>
+     
 
       <footer className="footer shell">
         <a className="brand" href="#top"><span>FF</span> FarmFinder <b>CNY</b></a>
