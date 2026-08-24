@@ -17,6 +17,7 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
       </div>
       <h3>{stand.name}</h3>
       <p className="location">{[stand.city, stand.state].filter(Boolean).join(", ") || location || "Central New York"}{distanceMiles !== null && <strong className="distance"> · {distanceMiles < 10 ? distanceMiles.toFixed(1) : Math.round(distanceMiles)} miles away</strong>}</p>
+      {stand.submission_type === "community" && <p className="community-attribution">Community submitted{stand.submitted_by_display_name ? ` by ${stand.submitted_by_display_name}` : ""} · Not yet owner-verified</p>}
      
      {stand.inventory && stand.inventory.length > 0 && (
   <div className="inventory-summary">
