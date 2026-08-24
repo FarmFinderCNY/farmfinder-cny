@@ -15,8 +15,8 @@ export default function ListYourFarmPage() {
       </nav>
       <header className="submission-hero shell">
         <p className="eyebrow">Join the local directory</p>
-        <h1>List your<br /><em>farm stand.</em></h1>
-        <p>Help neighbors find what you grow. Submit your information for review—there’s no fee to be considered for the directory.</p>
+        <h1>Share a<br /><em>local farm.</em></h1>
+        <p>List your own farm or suggest a local stand your neighbors should know about. Every submission is reviewed before publication.</p>
       </header>
       <section className="form-shell shell">
         <aside>
