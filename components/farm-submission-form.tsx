@@ -5,10 +5,10 @@ import Link from "next/link";
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
-export function FarmSubmissionForm() {
+export function FarmSubmissionForm({ defaultSubmissionType = "owner" }: { defaultSubmissionType?: "owner" | "community" }) {
   const [status, setStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState("");
-  const [submissionType, setSubmissionType] = useState<"owner" | "community">("owner");
+  const [submissionType, setSubmissionType] = useState<"owner" | "community">(defaultSubmissionType);
   const [showAttribution, setShowAttribution] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
