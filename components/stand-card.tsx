@@ -33,7 +33,7 @@ export function StandCard({ stand }: { stand: FarmStand }) {
 )}
  
       {stand.product_categories.length > 0 && <div className="category-chips">{stand.product_categories.slice(0, 4).map((category) => <span key={category}>{category}</span>)}</div>}
-     
+     <dl>
         {stand.hours && <><dt>Hours</dt><dd>{stand.hours}</dd></>}
         {stand.payment_methods && <><dt>Payment</dt><dd>{stand.payment_methods}</dd></>}
       </dl>
