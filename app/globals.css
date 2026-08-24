@@ -216,3 +216,52 @@ h1 em { color:var(--orange); font-weight:450; }
 .inventory-item-meta > span:last-child {
   font-weight: 600;
 }
+/* Farmer inventory status controls */
+
+.inventory-status-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.inventory-status {
+  width: 100%;
+  padding: 10px 8px;
+  border: 1px solid #b8b8a8;
+  border-radius: 10px;
+  background: #fff;
+  color: #173f30;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.inventory-status.available.active {
+  background: #dff1e3;
+  border-color: #4f9a62;
+  color: #175a2d;
+}
+
+.inventory-status.low.active {
+  background: #fff1c7;
+  border-color: #d7a72e;
+  color: #7a5200;
+}
+
+.inventory-status.sold-out.active {
+  background: #f7dddd;
+  border-color: #c76565;
+  color: #8b2929;
+}
+
+.inventory-status:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+@media (max-width: 520px) {
+  .inventory-status-buttons {
+    grid-template-columns: 1fr;
+  }
+}
