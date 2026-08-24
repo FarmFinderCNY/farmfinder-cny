@@ -2,7 +2,7 @@
 import type { FarmStand } from "@/lib/types";
 import Link from "next/link";
 
-export function StandCard({ stand }: { stand: FarmStand }) {
+export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; distanceMiles?: number | null }) {
   const location = [stand.address, stand.city, stand.state, stand.zip_code].filter(Boolean).join(", ");
   const directions = stand.latitude !== null && stand.longitude !== null
     ? `https://www.google.com/maps/dir/?api=1&destination=${stand.latitude},${stand.longitude}`
@@ -16,7 +16,7 @@ export function StandCard({ stand }: { stand: FarmStand }) {
         {stand.is_verified && <span className="verified">✓ Verified</span>}
       </div>
       <h3>{stand.name}</h3>
-      <p className="location">{[stand.city, stand.state].filter(Boolean).join(", ") || location || "Central New York"}</p>
+      <p className="location">{[stand.city, stand.state].filter(Boolean).join(", ") || location || "Central New York"}{distanceMiles !== null && <strong className="distance"> · {distanceMiles < 10 ? distanceMiles.toFixed(1) : Math.round(distanceMiles)} miles away</strong>}</p>
      
      {stand.inventory && stand.inventory.length > 0 && (
   <div className="inventory-summary">
