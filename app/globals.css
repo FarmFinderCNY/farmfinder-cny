@@ -19,6 +19,7 @@ h1 em { color:var(--orange); font-weight:450; }
 .primary-button { display:inline-flex; align-items:center; gap:35px; margin-top:14px; padding:16px 18px 16px 22px; border-radius:8px; color:white; background:var(--forest); text-decoration:none; font-weight:750; box-shadow:0 7px 0 #0d281d; }
 .primary-button span { color:var(--lime); }
 .hero-actions { display:flex; align-items:center; flex-wrap:wrap; gap:28px; margin-top:14px; }.hero-actions .primary-button { margin-top:0; }.text-button { color:var(--forest); font-size:14px; font-weight:800; text-underline-offset:4px; }
+.community-button { padding:9px 13px; border:1px solid rgba(24,61,44,.35); border-radius:999px; text-decoration:none; }
 .hero-art { position:relative; min-height:480px; overflow:hidden; border-radius:48% 48% 16px 16px; background:#b9d5c0; isolation:isolate; }
 .sun { position:absolute; width:150px; height:150px; right:60px; top:42px; border-radius:50%; background:var(--lime); }
 .field { position:absolute; left:-10%; width:120%; height:70%; border-radius:50% 50% 0 0; }
