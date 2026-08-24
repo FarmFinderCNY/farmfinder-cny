@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
 
 type Submission = {
+  submission_type: "owner" | "community";
   id: string;
   farm_name: string;
   address: string;
@@ -19,6 +20,9 @@ type Submission = {
   contact_name: string;
   contact_email: string;
   contact_phone: string | null;
+  submitter_display_name: string | null;
+  show_submitter_name: boolean;
+  source_url: string | null;
   status: "pending" | "approved" | "rejected";
   created_at: string;
 };
@@ -135,7 +139,7 @@ const [workingId, setWorkingId] = useState<string | null>(null);
     <div className="admin-toolbar"><div><p className="eyebrow">Private review queue</p><h1>Farm submissions</h1></div><div><button onClick={() => void loadSubmissions()}>Refresh</button><button onClick={() => void signOut()}>Sign out</button></div></div>
     {error && <p className="form-error admin-error" role="alert">{error}</p>}
     {loading ? <div className="admin-empty">Loading submissions…</div> : pending.length === 0 ? <div className="admin-empty"><span>✓</span><h2>You’re all caught up.</h2><p>No submissions are waiting for review.</p></div> : <div className="submission-queue">{pending.map((submission) => <article className="review-card" key={submission.id}>
-      <div className="review-heading"><div><span className="pending-badge">Pending</span><h2>{submission.farm_name}</h2><p>{[submission.address, submission.city, submission.state, submission.zip_code].join(", ")}</p></div><time>{new Date(submission.created_at).toLocaleDateString()}</time></div>
+      <div className="review-heading"><div><span className="pending-badge">{submission.submission_type === "community" ? "Community suggestion" : "Owner submission"}</span><h2>{submission.farm_name}</h2><p>{[submission.address, submission.city, submission.state, submission.zip_code].join(", ")}</p></div><time>{new Date(submission.created_at).toLocaleDateString()}</time></div>
       {submission.description && <p className="review-description">{submission.description}</p>}
       {submission.product_categories.length > 0 && <div className="category-chips">{submission.product_categories.map((category) => <span key={category}>{category}</span>)}</div>}
       <dl className="review-details">
@@ -143,8 +147,10 @@ const [workingId, setWorkingId] = useState<string | null>(null);
         {submission.payment_methods && <><dt>Payment</dt><dd>{submission.payment_methods}</dd></>}
         {submission.public_phone && <><dt>Public phone</dt><dd>{submission.public_phone}</dd></>}
         {submission.website && <><dt>Website</dt><dd>{submission.website}</dd></>}
+        {submission.source_url && <><dt>Source</dt><dd><a href={submission.source_url} target="_blank" rel="noreferrer">Review public source ↗</a></dd></>}
+        {submission.submission_type === "community" && <><dt>Attribution</dt><dd>{submission.show_submitter_name && submission.submitter_display_name ? `Community submitted by ${submission.submitter_display_name}` : "Anonymous community submission"}</dd></>}
       </dl>
-      <div className="private-contact"><strong>Private owner contact</strong><span>{submission.contact_name}</span><a href={`mailto:${submission.contact_email}`}>{submission.contact_email}</a>{submission.contact_phone && <a href={`tel:${submission.contact_phone}`}>{submission.contact_phone}</a>}</div>
+      <div className="private-contact"><strong>Private {submission.submission_type === "community" ? "contributor" : "owner"} contact</strong><span>{submission.contact_name}</span><a href={`mailto:${submission.contact_email}`}>{submission.contact_email}</a>{submission.contact_phone && <a href={`tel:${submission.contact_phone}`}>{submission.contact_phone}</a>}</div>
       <p className="review-note">Before approving, verify the details. After approval, add coordinates and an authorized photo in Supabase.</p>
       <div className="review-actions"><button className="reject-button" disabled={workingId === submission.id} onClick={() => void review(submission.id, "reject", submission.farm_name)}>Reject</button><button className="approve-button" disabled={workingId === submission.id} onClick={() => void review(submission.id, "approve", submission.farm_name)}>{workingId === submission.id ? "Working…" : "Approve & publish"}</button></div>
     </article>)}</div>}
