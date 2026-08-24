@@ -17,7 +17,7 @@ export function StandCard({ stand }: { stand: FarmStand }) {
       </div>
       <h3>{stand.name}</h3>
       <p className="location">{location || "Central New York"}</p>
-      {stand.description && <p className="description">{stand.description}</p>}
+      
       {stand.product_categories.length > 0 && <div className="category-chips">{stand.product_categories.slice(0, 4).map((category) => <span key={category}>{category}</span>)}</div>}
       <dl>
         {stand.hours && <><dt>Hours</dt><dd>{stand.hours}</dd></>}
