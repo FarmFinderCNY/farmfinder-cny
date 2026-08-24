@@ -6,7 +6,7 @@ import { StandCard } from "@/components/stand-card";
 import type { FarmStand } from "@/lib/types";
 
 export function StandDirectory({ stands }: { stands: FarmStand[] }) {
-  const pageSize = 12;
+const pageSize = 6;
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [visibleCount, setVisibleCount] = useState(pageSize);
