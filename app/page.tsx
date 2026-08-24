@@ -20,7 +20,7 @@ export default async function Home() {
           <p className="eyebrow">Grown nearby · Shared locally</p>
           <h1>Fresh food,<br /><em>close to home.</em></h1>
           <p className="lede">Find farm stands, roadside markets, and honest local food throughout Central New York.</p>
-          <div className="hero-actions"><a className="primary-button" href="#stands">Find a farm stand <span>↓</span></a><Link className="text-button" href="/list-your-farm">I’m a farmer — list my stand →</Link></div>
+          <div className="hero-actions"><a className="primary-button" href="#stands">Find a farm stand <span>↓</span></a><Link className="text-button" href="/list-your-farm">I’m a farmer — list my stand →</Link><Link className="text-button community-button" href="/list-your-farm?type=community">Suggest a local farm →</Link></div>
         </div>
         <div className="hero-art" aria-hidden="true">
           <div className="sun" />
