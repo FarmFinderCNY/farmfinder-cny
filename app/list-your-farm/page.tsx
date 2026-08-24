@@ -6,7 +6,9 @@ export const metadata = {
   description: "Submit a Central New York farm stand for review.",
 };
 
-export default function ListYourFarmPage() {
+export default async function ListYourFarmPage({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
+  const { type } = await searchParams;
+  const defaultSubmissionType = type === "community" ? "community" : "owner";
   return (
     <main>
       <nav className="nav shell" aria-label="Main navigation">
@@ -28,7 +30,7 @@ export default function ListYourFarmPage() {
             <li><span>3</span><p><strong>CNY finds you</strong>Approved listings appear on the stand list and map.</p></li>
           </ol>
         </aside>
-        <FarmSubmissionForm />
+        <FarmSubmissionForm defaultSubmissionType={defaultSubmissionType} />
       </section>
       <footer className="footer shell">
         <Link className="brand" href="/"><span>FF</span> FarmFinder <b>CNY</b></Link>
