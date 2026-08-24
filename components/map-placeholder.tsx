@@ -15,10 +15,10 @@ export function MapPlaceholder({ stands }: { stands: FarmStand[] }) {
     <section className="map-panel" aria-labelledby="map-title">
       <div className="map-copy">
         <p className="eyebrow">Explore the region</p>
-        <h2 id="map-title">Your next local stop is closer than you think.</h2>
+        <h2 id="map-title">Browse the map. Follow what’s fresh.</h2>
         <p>
           {mapped.length > 0
-            ? `${mapped.length} active ${mapped.length === 1 ? "stand is" : "stands are"} ready to plot.`
+            ? `${mapped.length} matching ${mapped.length === 1 ? "stand" : "stands"} on the map. Search or choose a category to narrow the view.`
             : "Farm locations will appear here as they are added."}
         </p>
       </div>
