@@ -16,7 +16,7 @@ export function StandCard({ stand }: { stand: FarmStand }) {
         {stand.is_verified && <span className="verified">✓ Verified</span>}
       </div>
       <h3>{stand.name}</h3>
-      <p className="location">{location || "Central New York"}</p>
+      <p className="location">{[stand.city, stand.state].filter(Boolean).join(", ") || location || "Central New York"}</p>
      
      {stand.inventory && stand.inventory.length > 0 && (
   <div className="inventory-summary">
@@ -26,7 +26,7 @@ export function StandCard({ stand }: { stand: FarmStand }) {
 
     {stand.inventory_updated_at && (
       <span>
-        Updated {new Date(stand.inventory_updated_at).toLocaleString()}
+        Updated {new Date(stand.inventory_updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
       </span>
     )}
   </div>
