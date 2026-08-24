@@ -284,53 +284,52 @@ const loadInventory = useCallback(async () => {
     </div>
   )}
 </div>
-              <div className="inventory-status-buttons">
-                <button
-                  type="button"
-                  className={
-                    item.status === "available" ? "active" : ""
-                  }
-                  disabled={loading}
-                  onClick={() =>
-                    void updateItem(item, {
-                      status: "available",
-                    })
-                  }
-                >
-                  Available
-                </button>
+             <div className="inventory-status-buttons">
+  <button
+    type="button"
+    className={`inventory-status available ${
+      item.status === "available" ? "active" : ""
+    }`}
+    disabled={loading}
+    onClick={() =>
+      void updateItem(item, {
+        status: "available",
+      })
+    }
+  >
+    Available
+  </button>
 
-                <button
-                  type="button"
-                  className={
-                    item.status === "low" ? "active" : ""
-                  }
-                  disabled={loading}
-                  onClick={() =>
-                    void updateItem(item, {
-                      status: "low",
-                    })
-                  }
-                >
-                  Low
-                </button>
+  <button
+    type="button"
+    className={`inventory-status low ${
+      item.status === "low" ? "active" : ""
+    }`}
+    disabled={loading}
+    onClick={() =>
+      void updateItem(item, {
+        status: "low",
+      })
+    }
+  >
+    Low stock
+  </button>
 
-                <button
-                  type="button"
-                  className={
-                    item.status === "sold_out" ? "active" : ""
-                  }
-                  disabled={loading}
-                  onClick={() =>
-                    void updateItem(item, {
-                      status: "sold_out",
-                    })
-                  }
-                >
-                  Sold out
-                </button>
-              </div>
-
+  <button
+    type="button"
+    className={`inventory-status sold-out ${
+      item.status === "sold_out" ? "active" : ""
+    }`}
+    disabled={loading}
+    onClick={() =>
+      void updateItem(item, {
+        status: "sold_out",
+      })
+    }
+  >
+    Sold out
+  </button>
+</div>
               <button
                 type="button"
                 className="text-button"
