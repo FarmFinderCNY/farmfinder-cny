@@ -17,57 +17,23 @@ export function StandCard({ stand }: { stand: FarmStand }) {
       </div>
       <h3>{stand.name}</h3>
       <p className="location">{location || "Central New York"}</p>
-      {stand.description && <p className="description">{stand.description}</p>}
-      {stand.inventory && stand.inventory.length > 0 && (
- 
+     
+     {stand.inventory && stand.inventory.length > 0 && (
+  <div className="inventory-summary">
+    <strong>
+      {stand.inventory.filter((item) => item.status !== "sold_out").length} items available
+    </strong>
 
-    
-  <section className="live-inventory">
-    <div className="live-inventory-heading">
-      <div>
-        <p className="eyebrow">Fresh at the stand</p>
-        <strong>Available now</strong>
-      </div>
-
-      {stand.inventory_updated_at && (
-        <span className="inventory-updated">
-          Updated{" "}
-          {new Date(stand.inventory_updated_at).toLocaleString()}
-        </span>
-      )}
-    </div>
-
-    <div className="live-inventory-items">
-      {stand.inventory
-        .filter((item) => item.status !== "sold_out")
-        .slice(0, 4)
-        .map((item) => (
-          <article className="live-inventory-item" key={item.id}>
-            <div className="inventory-product-main">
-              <strong>{item.name}</strong>
-
-              {item.status === "low" && (
-                <span className="inventory-low">Low stock</span>
-              )}
-            </div>
-
-            <div className="inventory-product-meta">
-              {item.quantity && (
-                <span>{item.quantity}</span>
-              )}
-
-              {item.price && (
-                <span>{item.price}</span>
-              )}
-            </div>
-          </article>
-        ))}
-    </div>
-  </section>
+    {stand.inventory_updated_at && (
+      <span>
+        Updated {new Date(stand.inventory_updated_at).toLocaleString()}
+      </span>
+    )}
+  </div>
 )}
  
       {stand.product_categories.length > 0 && <div className="category-chips">{stand.product_categories.slice(0, 4).map((category) => <span key={category}>{category}</span>)}</div>}
-      <dl>
+     
         {stand.hours && <><dt>Hours</dt><dd>{stand.hours}</dd></>}
         {stand.payment_methods && <><dt>Payment</dt><dd>{stand.payment_methods}</dd></>}
       </dl>
