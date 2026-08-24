@@ -1,4 +1,3 @@
-import { MapPlaceholder } from "@/components/map-placeholder";
 import { StandDirectory } from "@/components/stand-directory";
 import { getActiveFarmStands, hasSupabaseConfig } from "@/lib/supabase";
 import Link from "next/link";
@@ -36,12 +35,9 @@ export default async function Home() {
       <div className="marquee" aria-hidden="true">
         <span>FARM FRESH</span><i>✦</i><span>LOCALLY GROWN</span><i>✦</i><span>COMMUNITY ROOTED</span><i>✦</i><span>CNY PROUD</span>
       </div>
- <div className="shell">
-   <MapPlaceholder stands={stands} />
- </div>
       <section id="stands" className="stands-section shell">
         <div className="section-heading">
-          <div><p className="eyebrow">The stand list</p><h2>Local finds, all in one place.</h2></div>
+          <div><p className="eyebrow">Explore local farms</p><h2>Find what’s fresh near you.</h2></div>
           <p>{stands.length} active {stands.length === 1 ? "stand" : "stands"}</p>
         </div>
 
