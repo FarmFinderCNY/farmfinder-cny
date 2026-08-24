@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseClient } from "@/lib/supabase";
 
 type SubmissionPayload = {
+  submission_type?: unknown;
   farm_name?: unknown;
   address?: unknown;
   city?: unknown;
@@ -16,6 +17,9 @@ type SubmissionPayload = {
   contact_name?: unknown;
   contact_email?: unknown;
   contact_phone?: unknown;
+  submitter_display_name?: unknown;
+  show_submitter_name?: unknown;
+  source_url?: unknown;
   consent_to_publish?: unknown;
   company_website?: unknown;
 };
@@ -57,6 +61,7 @@ export async function POST(request: Request) {
   }
 
   const farmName = requiredText(body.farm_name, 120);
+  const submissionType = body.submission_type === "community" ? "community" : body.submission_type === "owner" ? "owner" : null;
   const address = requiredText(body.address, 180);
   const city = requiredText(body.city, 100);
   const state = requiredText(body.state, 2);
@@ -72,17 +77,22 @@ export async function POST(request: Request) {
   const hours = optionalText(body.hours, 300);
   const paymentMethods = optionalText(body.payment_methods, 200);
   const contactPhone = optionalText(body.contact_phone, 30);
+  const submitterDisplayName = optionalText(body.submitter_display_name, 80);
+  const sourceUrl = optionalText(body.source_url, 500);
+  const showSubmitterName = body.show_submitter_name === true;
   const allowedCategories = new Set(["Produce", "Meat", "Eggs", "Dairy", "Maple", "Honey", "Flowers", "Pumpkins", "Baked goods", "Other"]);
   const productCategories = Array.isArray(body.product_categories)
     ? body.product_categories.filter((item): item is string => typeof item === "string" && allowedCategories.has(item))
     : [];
 
-  if (!farmName || !address || !city || !state || !zipIsValid || !contactName || !emailIsValid || body.consent_to_publish !== true ||
-      [description, publicPhone, website, hours, paymentMethods, contactPhone].includes(undefined)) {
+  if (!submissionType || !farmName || !address || !city || !state || !zipIsValid || !contactName || !emailIsValid || body.consent_to_publish !== true ||
+      (submissionType === "community" && !sourceUrl) || (showSubmitterName && !submitterDisplayName) ||
+      [description, publicPhone, website, hours, paymentMethods, contactPhone, submitterDisplayName, sourceUrl].includes(undefined)) {
     return NextResponse.json({ error: "Please check the form fields." }, { status: 400 });
   }
 
   const { error } = await getSupabaseClient().from("farm_stand_submissions").insert({
+    submission_type: submissionType,
     farm_name: farmName,
     address,
     city,
@@ -97,6 +107,9 @@ export async function POST(request: Request) {
     contact_name: contactName,
     contact_email: contactEmail,
     contact_phone: contactPhone,
+    submitter_display_name: showSubmitterName ? submitterDisplayName : null,
+    show_submitter_name: showSubmitterName,
+    source_url: submissionType === "community" ? sourceUrl : null,
     consent_to_publish: true,
   });
 
@@ -123,8 +136,8 @@ export async function POST(request: Request) {
           from: "FarmFinder CNY <notifications@send.farmfindercny.com>",
           to: [adminEmail],
           reply_to: contactEmail,
-          subject: `New farm submission: ${farmName}`,
-          html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#123f2d"><h1>New farm submission</h1><h2>${safeFarmName}</h2><p><strong>Location:</strong> ${safeLocation}</p><p><strong>Submitted by:</strong> ${safeContactName} (${safeContactEmail})</p><p>A new listing is waiting in your private review queue.</p><p><a href="https://www.farmfindercny.com/admin" style="display:inline-block;padding:12px 18px;background:#123f2d;color:white;text-decoration:none;border-radius:6px">Review submission</a></p></div>`,
+          subject: `New ${submissionType === "community" ? "community suggestion" : "farm submission"}: ${farmName}`,
+          html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#123f2d"><h1>New ${submissionType === "community" ? "community suggestion" : "farm submission"}</h1><h2>${safeFarmName}</h2><p><strong>Location:</strong> ${safeLocation}</p><p><strong>Submitted by:</strong> ${safeContactName} (${safeContactEmail})</p><p>A new listing is waiting in your private review queue.</p><p><a href="https://www.farmfindercny.com/admin" style="display:inline-block;padding:12px 18px;background:#123f2d;color:white;text-decoration:none;border-radius:6px">Review submission</a></p></div>`,
         }),
       });
 
