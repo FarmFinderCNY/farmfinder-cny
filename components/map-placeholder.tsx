@@ -8,7 +8,7 @@ const FarmMap = dynamic(() => import("@/components/farm-map").then((module) => m
   loading: () => <div className="map-loading">Loading farm map…</div>,
 });
 
-export function MapPlaceholder({ stands }: { stands: FarmStand[] }) {
+export function MapPlaceholder({ stands, userLocation = null }: { stands: FarmStand[]; userLocation?: { latitude: number; longitude: number } | null }) {
   const mapped = stands.filter((stand) => stand.latitude !== null && stand.longitude !== null);
 
   return (
@@ -23,7 +23,7 @@ export function MapPlaceholder({ stands }: { stands: FarmStand[] }) {
         </p>
       </div>
       <div className="map-canvas" aria-label="Interactive map of active farm stands">
-        {mapped.length > 0 ? <FarmMap stands={mapped} /> : <div className="map-loading">Add coordinates to place farms on the map.</div>}
+        {mapped.length > 0 ? <FarmMap stands={mapped} userLocation={userLocation} /> : <div className="map-loading">Add coordinates to place farms on the map.</div>}
       </div>
     </section>
   );
