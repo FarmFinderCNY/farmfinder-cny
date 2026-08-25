@@ -200,7 +200,7 @@ export function AdminDashboard() {
         {submission.website && <><dt>Website</dt><dd>{submission.website}</dd></>}
       </dl>
       <div className="private-contact"><strong>Private owner contact</strong><span>{submission.contact_name}</span><a href={`mailto:${submission.contact_email}`}>{submission.contact_email}</a>{submission.contact_phone && <a href={`tel:${submission.contact_phone}`}>{submission.contact_phone}</a>}</div>
-      <p className="review-note">Before approving, verify the details. After approval, add coordinates and an authorized photo in Supabase.</p>
+     <p className="review-note">Before approving, verify the details. The farm location will be found automatically from the submitted address.</p>
       <div className="review-actions"><button className="reject-button" disabled={workingId === submission.id} onClick={() => void review(submission.id, "reject", submission.farm_name)}>Reject</button><button className="approve-button" disabled={workingId === submission.id} onClick={() => void review(submission.id, "approve", submission.farm_name)}>{workingId === submission.id ? "Working…" : "Approve & publish"}</button></div>
     </article>)}</div>}
   </section>;
