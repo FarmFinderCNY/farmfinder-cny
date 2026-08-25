@@ -38,20 +38,28 @@ export default async function ClaimFarmPage({
 
         <h1>Claim {stand.name}</h1>
 
-        <p>
-          Are you the owner or authorized manager of this farm?
-          Submit an ownership request and FarmFinder CNY will review
-          it before giving your account access to manage the listing.
-        </p>
+        <p>Do you own or operate this farm/stand?</p>
 
-        <div style={{ marginTop: "30px" }}>
-          <Link
-            className="primary-button"
-            href={`/farmer?claim=${stand.id}`}
-          >
-            Continue ownership claim
-          </Link>
-        </div>
+<div className="detail-actions" style={{ marginTop: "24px" }}>
+  <Link
+    className="primary-button"
+    href={`/farmer?claim=${stand.id}`}
+  >
+    Yes
+  </Link>
+
+  <Link
+    className="text-button"
+    href={`/farms/${stand.id}`}
+  >
+    No
+  </Link>
+</div>
+
+<p style={{ marginTop: "18px" }}>
+  If you continue, FarmFinder CNY may contact you to verify your connection
+  to this farm before approving access. No proof document is required now.
+</p>
 
         <div style={{ marginTop: "20px" }}>
           <Link
