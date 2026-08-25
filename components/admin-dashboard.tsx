@@ -33,6 +33,7 @@ const [loading, setLoading] = useState(true);
 const [submissions, setSubmissions] = useState<Submission[]>([]);
 const [error, setError] = useState("");
 const [workingId, setWorkingId] = useState<string | null>(null);
+const [coordinates, setCoordinates] = useState<Record<string, { latitude: string; longitude: string }>>({});
  const loadSubmissions = useCallback(async () => {
   setLoading(true);
   setError("");
@@ -111,12 +112,20 @@ const [workingId, setWorkingId] = useState<string | null>(null);
   }
 
   async function review(id: string, decision: "approve" | "reject", farmName: string) {
+    const coordinate = coordinates[id];
+    const latitude = Number(coordinate?.latitude);
+    const longitude = Number(coordinate?.longitude);
+    if (decision === "approve" && (!coordinate?.latitude || !coordinate?.longitude || !Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180)) {
+      setError("Enter a valid latitude and longitude before approving this farm.");
+      return;
+    }
     const confirmed = window.confirm(decision === "approve" ? `Approve ${farmName} and publish it?` : `Reject ${farmName}?`);
     if (!confirmed) return;
     setWorkingId(id);
     setError("");
     const functionName = decision === "approve" ? "approve_farm_submission" : "reject_farm_submission";
-    const { error: reviewError } = await getBrowserSupabaseClient().rpc(functionName, { submission_id: id });
+    const rpcArguments = decision === "approve" ? { submission_id: id, farm_latitude: latitude, farm_longitude: longitude } : { submission_id: id };
+    const { error: reviewError } = await getBrowserSupabaseClient().rpc(functionName, rpcArguments);
     if (reviewError) setError(reviewError.message);
     else await loadSubmissions();
     setWorkingId(null);
@@ -151,8 +160,9 @@ const [workingId, setWorkingId] = useState<string | null>(null);
         {submission.submission_type === "community" && <><dt>Attribution</dt><dd>{submission.show_submitter_name && submission.submitter_display_name ? `Community submitted by ${submission.submitter_display_name}` : "Anonymous community submission"}</dd></>}
       </dl>
       <div className="private-contact"><strong>Private {submission.submission_type === "community" ? "contributor" : "owner"} contact</strong><span>{submission.contact_name}</span><a href={`mailto:${submission.contact_email}`}>{submission.contact_email}</a>{submission.contact_phone && <a href={`tel:${submission.contact_phone}`}>{submission.contact_phone}</a>}</div>
-      <p className="review-note">Before approving, verify the details. After approval, add coordinates and an authorized photo in Supabase.</p>
-      <div className="review-actions"><button className="reject-button" disabled={workingId === submission.id} onClick={() => void review(submission.id, "reject", submission.farm_name)}>Reject</button><button className="approve-button" disabled={workingId === submission.id} onClick={() => void review(submission.id, "approve", submission.farm_name)}>{workingId === submission.id ? "Working…" : "Approve & publish"}</button></div>
+      <div className="coordinate-entry"><strong>Map location required before approval</strong><p>Find the farm on Google Maps, then enter its latitude and longitude.</p><div><label>Latitude<input type="number" step="any" min="-90" max="90" placeholder="43.123456" value={coordinates[submission.id]?.latitude ?? ""} onChange={(event) => setCoordinates((current) => ({ ...current, [submission.id]: { latitude: event.target.value, longitude: current[submission.id]?.longitude ?? "" } }))} /></label><label>Longitude<input type="number" step="any" min="-180" max="180" placeholder="-75.123456" value={coordinates[submission.id]?.longitude ?? ""} onChange={(event) => setCoordinates((current) => ({ ...current, [submission.id]: { latitude: current[submission.id]?.latitude ?? "", longitude: event.target.value } }))} /></label></div></div>
+      <p className="review-note">Verify the public details, coordinates, and source before approval. An authorized photo can be added later.</p>
+      <div className="review-actions"><button className="reject-button" disabled={workingId === submission.id} onClick={() => void review(submission.id, "reject", submission.farm_name)}>Reject</button><button className="approve-button" disabled={workingId === submission.id || !coordinates[submission.id]?.latitude || !coordinates[submission.id]?.longitude} onClick={() => void review(submission.id, "approve", submission.farm_name)}>{workingId === submission.id ? "Working…" : "Approve & publish"}</button></div>
     </article>)}</div>}
   </section>;
 }
