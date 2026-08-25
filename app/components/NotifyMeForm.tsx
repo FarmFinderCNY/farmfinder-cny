@@ -1,8 +1,8 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { getBrowserSupabaseClient } from "@/lib/supabase";
-
+import { useState } from "react";
+import type { FormEvent } from "react";
+import { getSupabaseClient } from "@/lib/supabase";
 export default function NotifyMeForm({ farmId }: { farmId: string }) {
   const [showForm, setShowForm] = useState(false);
   const [productName, setProductName] = useState("");
@@ -15,7 +15,7 @@ export default function NotifyMeForm({ farmId }: { farmId: string }) {
     setSaving(true);
     setMessage("");
 
-    const supabase = getBrowserSupabaseClient();
+    const supabase = getSupabaseClient();
 
     const { error } = await supabase
       .from("inventory_alert_subscriptions")
