@@ -96,7 +96,11 @@ export default function ContactPage() {
             {sending ? "Sending..." : "Send private message"}
           </button>
 
-          {result && <p role="status">{result}</p>}
+        {result && (
+  <p role="status" style={{ marginTop: "18px" }}>
+    {result}
+  </p>
+)}
         </form>
 
         <div style={{ marginTop: "28px" }}>
