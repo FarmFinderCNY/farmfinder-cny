@@ -170,17 +170,7 @@ export function AdminDashboard() {
     setWorkingId(null);
   }
 
-    const confirmed = window.confirm(decision === "approve" ? `Approve ${farmName} and publish it?` : `Reject ${farmName}?`);
-    if (!confirmed) return;
-    setWorkingId(id);
-    setError("");
-    const functionName = decision === "approve" ? "approve_farm_submission" : "reject_farm_submission";
-    const { error: reviewError } = await getBrowserSupabaseClient().rpc(functionName, { submission_id: id });
-    if (reviewError) setError(reviewError.message);
-    else await loadSubmissions();
-    setWorkingId(null);
-  }
-
+  
   if (!signedIn) {
     return <form className="admin-login" onSubmit={signIn}>
       <p className="eyebrow">Private access</p><h1>Administrator sign in</h1>
