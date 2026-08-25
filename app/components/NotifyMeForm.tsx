@@ -66,6 +66,7 @@ export default function NotifyMeForm({ farmId }: { farmId: string }) {
       </label>
 
       <label>
+   
         Email
         <input
           type="email"
@@ -75,7 +76,10 @@ export default function NotifyMeForm({ farmId }: { farmId: string }) {
           required
         />
       </label>
-
+     <small className="privacy-note">
+  By creating an alert, you agree to the{" "}
+  <a href="/privacy">Privacy Policy</a>.
+</small>
       <button type="submit" className="primary-button" disabled={saving}>
         {saving ? "Saving..." : "Create alert"}
       </button>
