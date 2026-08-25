@@ -73,11 +73,12 @@ export default function PrivacyPolicyPage() {
           date above will be updated when material changes are made.
         </p>
 
-        <h2>Contact</h2>
-        <p>
-          Privacy questions or requests may be submitted through FarmFinder
-          CNY’s published contact information.
-        </p>
+     <h2>Contact</h2>
+<p>
+  Privacy questions, corrections, or deletion requests may be submitted
+  through our <Link href="/contact">private contact form</Link>. Your message
+  and email address are not displayed publicly.
+</p>
 
         <div style={{ marginTop: "32px" }}>
           <Link className="primary-button" href="/">
