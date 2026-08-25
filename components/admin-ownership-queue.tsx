@@ -23,26 +23,28 @@ export function AdminOwnershipQueue() {
   const [active, setActive] = useState(false); const [claims, setClaims] = useState<Claim[]>([]); const [updates, setUpdates] = useState<Update[]>([]); const [error, setError] = useState(""); const [working, setWorking] = useState("");
   const load = useCallback(async () => {
     const supabase = getBrowserSupabaseClient();
-   const [{ data: claimData, error: claimError }, { data: updateData, error: updateError }] = await Promise.all([
-  supabase
-    .from("farm_claim_requests")
-    .select("id,farm_id,requested_by,message,status,created_at,claimant_name,claimant_email,claimant_phone,claimant_role,verification_notes,farm_stands(name,city)")
-    .eq("status", "pending")
-    .order("created_at", { ascending: false }),
+    setError("");
+    try {
+      const loadClaims = () => supabase.from("farm_claim_requests").select("id,farm_id,requested_by,message,status,created_at,claimant_name,claimant_email,claimant_phone,claimant_role,verification_notes,farm_stands(name,city)").eq("status", "pending").order("created_at", { ascending: false });
+      let claimResult = await loadClaims();
+      if (claimResult.error?.message.includes("Failed to fetch")) claimResult = await loadClaims();
+      if (claimResult.error) throw claimResult.error;
+      setClaims((claimResult.data ?? []) as unknown as Claim[]);
 
-  supabase
-    .from("farm_update_requests")
-    .select("id,farm_id,name,address,city,state,zip_code,description,phone,website,hours,payment_methods,status,created_at")
-    .eq("status", "pending")
-    .order("created_at", { ascending: false }),
-]);
-    if (claimError || updateError) setError(claimError?.message ?? updateError?.message ?? "Unable to load requests.");
-    setClaims((claimData ?? []) as unknown as Claim[]); setUpdates((updateData ?? []) as Update[]);
+      const loadUpdates = () => supabase.from("farm_update_requests").select("id,farm_id,name,address,city,state,zip_code,description,phone,website,hours,payment_methods,status,created_at").eq("status", "pending").order("created_at", { ascending: false });
+      let updateResult = await loadUpdates();
+      if (updateResult.error?.message.includes("Failed to fetch")) updateResult = await loadUpdates();
+      if (updateResult.error) throw updateResult.error;
+      setUpdates((updateResult.data ?? []) as Update[]);
+    } catch (loadError) {
+      console.error("Farmer request load failed:", loadError);
+      setError("Unable to load farmer requests right now. Please try Refresh.");
+    }
   }, []);
   useEffect(() => {
     const supabase = getBrowserSupabaseClient();
     supabase.auth.getSession().then(({ data }) => { if (data.session) { setActive(true); void load(); } });
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => { setActive(Boolean(session)); if (session) void load(); });
+    const { data } = supabase.auth.onAuthStateChange((event, session) => { setActive(Boolean(session)); if (session && event === "SIGNED_IN") void load(); });
     return () => data.subscription.unsubscribe();
   }, [load]);
   async function decide(kind: "claim" | "update", decision: "approve" | "reject", id: string) {

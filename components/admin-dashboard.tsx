@@ -58,10 +58,12 @@ const [coordinates, setCoordinates] = useState<Record<string, { latitude: string
       return;
     }
 
-    const { data, error: queryError } = await supabase
-      .from("farm_stand_submissions")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const fetchSubmissions = () => supabase.from("farm_stand_submissions").select("*").order("created_at", { ascending: false });
+    let { data, error: queryError } = await fetchSubmissions();
+
+    if (queryError?.message.includes("Failed to fetch")) {
+      ({ data, error: queryError } = await fetchSubmissions());
+    }
 
     if (queryError) {
       setError("Unable to load farm submissions right now.");
@@ -147,7 +149,7 @@ const [coordinates, setCoordinates] = useState<Record<string, { latitude: string
   return <section className="admin-panel">
     <div className="admin-toolbar"><div><p className="eyebrow">Private review queue</p><h1>Farm submissions</h1></div><div><button onClick={() => void loadSubmissions()}>Refresh</button><button onClick={() => void signOut()}>Sign out</button></div></div>
     {error && <p className="form-error admin-error" role="alert">{error}</p>}
-    {loading ? <div className="admin-empty">Loading submissions…</div> : pending.length === 0 ? <div className="admin-empty"><span>✓</span><h2>You’re all caught up.</h2><p>No submissions are waiting for review.</p></div> : <div className="submission-queue">{pending.map((submission) => <article className="review-card" key={submission.id}>
+    {loading ? <div className="admin-empty">Loading submissions…</div> : error ? null : pending.length === 0 ? <div className="admin-empty"><span>✓</span><h2>You’re all caught up.</h2><p>No submissions are waiting for review.</p></div> : <div className="submission-queue">{pending.map((submission) => <article className="review-card" key={submission.id}>
       <div className="review-heading"><div><span className="pending-badge">{submission.submission_type === "community" ? "Community suggestion" : "Owner submission"}</span><h2>{submission.farm_name}</h2><p>{[submission.address, submission.city, submission.state, submission.zip_code].join(", ")}</p></div><time>{new Date(submission.created_at).toLocaleDateString()}</time></div>
       {submission.description && <p className="review-description">{submission.description}</p>}
       {submission.product_categories.length > 0 && <div className="category-chips">{submission.product_categories.map((category) => <span key={category}>{category}</span>)}</div>}
