@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getActiveFarmStand } from "@/lib/supabase";
-
+import NotifyMeForm from "@/app/components/NotifyMeForm";
 export const revalidate = 300;
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -65,6 +65,7 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
       🌾 Own this farm? Claim it
     </Link>
   )}
+    <NotifyMeForm farmId={stand.id} />     
 </div>
       </div>
       {stand.photo_url
