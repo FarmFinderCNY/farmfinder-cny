@@ -217,15 +217,16 @@ async function requestUpdate(event: FormEvent<HTMLFormElement>) {
         />
       </label>
 
-      <label className="form-wide">
-        Verification details
-        <textarea
-          name="verification_notes"
-          rows={5}
-          placeholder="Tell us how we can verify your connection to this farm. Do not include passwords."
-          required
-        />
-      </label>
+      <input
+  type="hidden"
+  name="verification_notes"
+  value="Applicant confirmed they own or operate this farm/stand."
+/>
+
+<p className="form-wide">
+  FarmFinder CNY may contact you if additional verification is needed before
+  approving access.
+</p>
 
       <button className="submit-button" disabled={loading}>
         {loading ? "Submitting..." : "Submit ownership claim"}
