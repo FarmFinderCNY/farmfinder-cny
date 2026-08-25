@@ -58,7 +58,9 @@ export default async function Home() {
         <a className="brand" href="#top"><span>FF</span> FarmFinder <b>CNY</b></a>
        <p>
   Helping Central New York find food grown closer to home.{" "}
-  <Link href="/privacy">Privacy Policy</Link>
+ <Link href="/contact">Contact Ronald</Link>
+{" · "}
+<Link href="/privacy">Privacy Policy</Link>
 </p>
       </footer>
     </main>
