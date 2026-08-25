@@ -27,17 +27,84 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [locationState, setLocationState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const categories = useMemo(() => Array.from(new Set(stands.flatMap((stand) => stand.product_categories))).sort(), [stands]);
-  const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    const matches = stands.filter((stand) => {
-      const searchable = [stand.name, stand.city, stand.address, stand.description, ...stand.product_categories].filter(Boolean).join(" ").toLowerCase();
-      return (!query || searchable.includes(query)) && (category === "All" || stand.product_categories.includes(category));
-    });
-    if (!userLocation) return matches;
-    return matches.map((stand, index) => ({ stand, index, distance: distanceInMiles(userLocation, stand) }))
-      .sort((a, b) => (a.distance ?? Number.POSITIVE_INFINITY) - (b.distance ?? Number.POSITIVE_INFINITY) || a.index - b.index)
-      .map(({ stand }) => stand);
-  }, [stands, search, category, userLocation]);
+const filtered = useMemo(() => {
+  const query = search.trim().toLowerCase();
+
+  return stands
+    .map((stand, index) => {
+      const inventory = stand.inventory ?? [];
+      const matchingProducts = query
+        ? inventory.filter((product) =>
+            product.name.toLowerCase().includes(query)
+          )
+        : inventory;
+
+      const searchable = [
+        stand.name,
+        stand.city,
+        stand.address,
+        stand.description,
+        ...stand.product_categories,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      const matchesSearch =
+        !query ||
+        searchable.includes(query) ||
+        matchingProducts.length > 0;
+
+      const matchesCategory =
+        category === "All" ||
+        stand.product_categories.includes(category);
+
+      const availabilityRank = matchingProducts.some(
+        (product) => product.status === "available"
+      )
+        ? 0
+        : matchingProducts.some((product) => product.status === "low")
+          ? 1
+          : matchingProducts.some((product) => product.status === "sold_out")
+            ? 2
+            : 3;
+
+      return {
+        stand,
+        index,
+        matchesSearch,
+        matchesCategory,
+        availabilityRank,
+        distance: userLocation
+          ? distanceInMiles(userLocation, stand)
+          : null,
+        freshness: stand.inventory_updated_at
+          ? new Date(stand.inventory_updated_at).getTime()
+          : 0,
+      };
+    })
+    .filter((result) => result.matchesSearch && result.matchesCategory)
+    .sort((a, b) => {
+      if (a.availabilityRank !== b.availabilityRank) {
+        return a.availabilityRank - b.availabilityRank;
+      }
+
+      if (userLocation) {
+        const distanceDifference =
+          (a.distance ?? Number.POSITIVE_INFINITY) -
+          (b.distance ?? Number.POSITIVE_INFINITY);
+
+        if (distanceDifference !== 0) return distanceDifference;
+      }
+
+      if (a.freshness !== b.freshness) {
+        return b.freshness - a.freshness;
+      }
+
+      return a.index - b.index;
+    })
+    .map(({ stand }) => stand);
+}, [stands, search, category, userLocation]);
 
   const visible = filtered.slice(0, visibleCount);
   const remaining = Math.max(filtered.length - visible.length, 0);
