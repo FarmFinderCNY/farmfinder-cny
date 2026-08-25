@@ -33,7 +33,7 @@ export default function NotifyMeForm({ farmId }: { farmId: string }) {
     }
 
     setMessage(
-      "You’re signed up! We’ll notify you when it becomes available."
+    "Your alert request has been saved."
     );
     setProductName("");
     setEmail("");
