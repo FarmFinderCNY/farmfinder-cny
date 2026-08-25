@@ -9,6 +9,9 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
 
   return (
+    const availableToday = (stand.inventory ?? []).filter(
+  (item) => item.status !== "sold_out"
+);
     <article className="stand-card">
       {stand.photo_url && <img className="stand-photo" src={stand.photo_url} alt={`${stand.name} farm`} />}
       <div className="card-topline">
@@ -19,15 +22,29 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
       <p className="location">{[stand.city, stand.state].filter(Boolean).join(", ") || location || "Central New York"}{distanceMiles !== null && <strong className="distance"> · {distanceMiles < 10 ? distanceMiles.toFixed(1) : Math.round(distanceMiles)} miles away</strong>}</p>
       {stand.submission_type === "community" && <p className="community-attribution">Community submitted{stand.submitted_by_display_name ? ` by ${stand.submitted_by_display_name}` : ""} · Not yet owner-verified</p>}
      
-     {stand.inventory && stand.inventory.length > 0 && (
+    {availableToday.length > 0 && (
   <div className="inventory-summary">
-    <strong>
-      {stand.inventory.filter((item) => item.status !== "sold_out").length} items available
-    </strong>
+    <strong>Available today</strong>
+
+    <span>
+      {availableToday
+        .slice(0, 3)
+        .map((item) =>
+          item.status === "low" ? `${item.name} (low)` : item.name
+        )
+        .join(" · ")}
+      {availableToday.length > 3
+        ? ` · +${availableToday.length - 3} more`
+        : ""}
+    </span>
 
     {stand.inventory_updated_at && (
       <span>
-        Updated {new Date(stand.inventory_updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+        Updated{" "}
+        {new Date(stand.inventory_updated_at).toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+        })}
       </span>
     )}
   </div>
