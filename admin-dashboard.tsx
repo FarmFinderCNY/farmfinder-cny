@@ -80,7 +80,96 @@ export function AdminDashboard() {
     setSubmissions([]);
   }
 
-  async function review(id: string, decision: "approve" | "reject", farmName: string) {
+ async function review(id: string, decision: "approve" | "reject", farmName: string) {
+  const confirmed = window.confirm(
+    decision === "approve"
+      ? `Approve ${farmName} and publish it?`
+      : `Reject ${farmName}?`
+  );
+
+  if (!confirmed) return;
+
+  setWorkingId(id);
+  setError("");
+
+  try {
+    const supabase = getBrowserSupabaseClient();
+
+    if (decision === "approve") {
+      const submission = submissions.find((item) => item.id === id);
+
+      if (!submission) {
+        throw new Error("Farm submission could not be found.");
+      }
+
+      const fullAddress = [
+        submission.address,
+        submission.city,
+        submission.state,
+        submission.zip_code,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      const geocodeUrl =
+        "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress" +
+        `?address=${encodeURIComponent(fullAddress)}` +
+        "&benchmark=Public_AR_Current&format=json";
+
+      const response = await fetch(geocodeUrl);
+
+      if (!response.ok) {
+        throw new Error("The address lookup service could not be reached.");
+      }
+
+      const geocodeData: {
+        result?: {
+          addressMatches?: Array<{
+            coordinates?: { x?: number; y?: number };
+          }>;
+        };
+      } = await response.json();
+
+      const coordinates = geocodeData.result?.addressMatches?.[0]?.coordinates;
+      const farmLatitude = Number(coordinates?.y);
+      const farmLongitude = Number(coordinates?.x);
+
+      if (!Number.isFinite(farmLatitude) || !Number.isFinite(farmLongitude)) {
+        throw new Error(
+          "We could not locate this address. Check the street address, city, state, and ZIP code."
+        );
+      }
+
+      const { error: reviewError } = await supabase.rpc(
+        "approve_farm_submission",
+        {
+          submission_id: id,
+          farm_latitude: farmLatitude,
+          farm_longitude: farmLongitude,
+        }
+      );
+
+      if (reviewError) throw reviewError;
+    } else {
+      const { error: reviewError } = await supabase.rpc(
+        "reject_farm_submission",
+        { submission_id: id }
+      );
+
+      if (reviewError) throw reviewError;
+    }
+
+    await loadSubmissions();
+  } catch (reviewError) {
+    setError(
+      reviewError instanceof Error
+        ? reviewError.message
+        : "Unable to review this submission."
+    );
+  } finally {
+    setWorkingId(null);
+  }
+
     const confirmed = window.confirm(decision === "approve" ? `Approve ${farmName} and publish it?` : `Reject ${farmName}?`);
     if (!confirmed) return;
     setWorkingId(id);
