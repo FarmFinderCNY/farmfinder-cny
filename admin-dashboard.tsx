@@ -170,7 +170,9 @@ export function AdminDashboard() {
     setWorkingId(null);
   }
 
-  
+  }
+
+
   if (!signedIn) {
     return <form className="admin-login" onSubmit={signIn}>
       <p className="eyebrow">Private access</p><h1>Administrator sign in</h1>
