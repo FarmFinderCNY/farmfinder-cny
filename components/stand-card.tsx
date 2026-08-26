@@ -15,7 +15,7 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
     <article className="stand-card">
       {stand.photo_url && <img className="stand-photo" src={stand.photo_url} alt={`${stand.name} farm`} />}
       <div className="card-topline">
-        <span className="status"><i /> Open listing</span>
+        <span className="status"><i /> Active listing</span>
         {stand.is_verified && <span className="verified">✓ Verified</span>}
       </div>
       <h3>{stand.name}</h3>
