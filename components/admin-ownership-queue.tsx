@@ -20,7 +20,7 @@ type Claim = {
 type Update = { id: string; farm_id: string; name: string; address: string; city: string; state: string; zip_code: string; description: string | null; phone: string | null; website: string | null; hours: string | null; payment_methods: string | null; status: string; created_at: string };
 
 export function AdminOwnershipQueue() {
-  const [active, setActive] = useState(false); const [claims, setClaims] = useState<Claim[]>([]); const [updates, setUpdates] = useState<Update[]>([]); const [error, setError] = useState(""); const [working, setWorking] = useState("");
+  const [active, setActive] = useState(false); const [claims, setClaims] = useState<Claim[]>([]); const [updates, setUpdates] = useState<Update[]>([]); const [error, setError] = useState(""); const [message, setMessage] = useState(""); const [working, setWorking] = useState("");
   const load = useCallback(async () => {
     const supabase = getBrowserSupabaseClient();
     setError("");
@@ -48,13 +48,22 @@ export function AdminOwnershipQueue() {
     return () => data.subscription.unsubscribe();
   }, [load]);
   async function decide(kind: "claim" | "update", decision: "approve" | "reject", id: string) {
-    if (!window.confirm(`${decision === "approve" ? "Approve" : "Reject"} this ${kind} request?`)) return;
-    setWorking(id); setError("");
+    const confirmation = decision === "approve" && kind === "claim"
+      ? "Approve this ownership request? The farmer will immediately be able to update this listing and its products."
+      : `${decision === "approve" ? "Approve" : "Reject"} this ${kind} request?`;
+    if (!window.confirm(confirmation)) return;
+    setWorking(id); setError(""); setMessage("");
     const { error: rpcError } = await getBrowserSupabaseClient().rpc(`${decision}_${kind === "claim" ? "farm_claim" : "farm_update"}`, kind === "claim" ? { claim_id: id } : { request_id: id });
-    if (rpcError) setError(rpcError.message); else await load(); setWorking("");
+    if (rpcError) setError(rpcError.message); else {
+      setMessage(decision === "approve" && kind === "claim"
+        ? "Ownership approved. The farmer can now sign in and update products immediately."
+        : `${kind === "claim" ? "Ownership" : "Listing update"} request ${decision === "approve" ? "approved" : "rejected"}.`);
+      await load();
+    }
+    setWorking("");
   }
   if (!active) return null;
-  return <section className="ownership-admin"><div className="queue-title"><div><p className="eyebrow">Ownership and updates</p><h2>Farmer requests</h2></div><button onClick={() => void load()}>Refresh</button></div>{error && <p className="form-error admin-error">{error}</p>}
+  return <section className="ownership-admin"><div className="queue-title"><div><p className="eyebrow">Ownership and updates</p><h2>Farmer requests</h2></div><button onClick={() => void load()}>Refresh</button></div>{error && <p className="form-error admin-error">{error}</p>}{message && <p className="form-success admin-review-message">{message}</p>}
    
     <h3>Ownership claims</h3>
 
