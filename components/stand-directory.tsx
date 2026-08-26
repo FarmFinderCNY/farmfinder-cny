@@ -148,6 +148,10 @@ const filtered = useMemo(() => {
       {categories.length > 0 && <div className="filter-row" aria-label="Filter by product category">{["All", ...categories].map((item) => <button key={item} type="button" className={category === item ? "active" : ""} aria-pressed={category === item} onClick={() => updateCategory(item)}>{item}</button>)}</div>}
     </div>
     <MapPlaceholder stands={filtered} userLocation={userLocation} />
+        <aside className="availability-guide" aria-label="How product availability is shown">
+      <strong>How availability works</strong>
+      <p><b>Available today</b> appears when a farmer has recently updated their products. <b>Usually offers</b> shows the farm’s general selection and may not reflect what is currently in stock.</p>
+    </aside>
     {filtered.length > 0 ? <>
       <div className="results-heading" aria-live="polite">
         <div><p className="eyebrow">Matching stands</p><h3>{filtered.length} {filtered.length === 1 ? "farm found" : "farms found"}</h3></div>
