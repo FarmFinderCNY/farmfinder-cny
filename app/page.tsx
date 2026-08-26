@@ -11,57 +11,118 @@ export default async function Home() {
   return (
     <main>
       <nav className="nav shell" aria-label="Main navigation">
-        <a className="brand" href="#top"><span>FF</span> FarmFinder <b>CNY</b></a>
-        <div className="nav-actions"><a className="nav-link" href="#stands">Browse stands</a><Link className="nav-link nav-submit" href="/list-your-farm">List your farm</Link></div>
+        <a className="brand" href="#top">
+          <span>FF</span> FarmFinder <b>CNY</b>
+        </a>
+
+        <div className="nav-actions">
+          <a className="nav-link" href="#stands">Browse stands</a>
+          <Link className="nav-link nav-submit" href="/list-your-farm">
+            List your farm
+          </Link>
+        </div>
       </nav>
 
-      <header id="top" className="hero shell">
-        <div className="hero-copy">
-          <p className="eyebrow">Grown nearby · Shared locally</p>
-          <h1>Fresh food,<br /><em>close to home.</em></h1>
-          <p className="lede">Find farm stands, roadside markets, and honest local food throughout Central New York.</p>
-          <div className="hero-actions"><a className="primary-button" href="#stands">Find a farm stand <span>↓</span></a><Link className="text-button" href="/list-your-farm">I’m a farmer — list my stand →</Link><Link className="text-button community-button" href="/list-your-farm?type=community">Suggest a local farm →</Link></div>
+      <header id="top" className="slideshow-hero">
+        <div className="hero-slides" aria-hidden="true">
+          <div className="hero-slide hero-slide-one" />
+          <div className="hero-slide hero-slide-two" />
+          <div className="hero-slide hero-slide-three" />
+          <div className="hero-slide hero-slide-four" />
         </div>
-        <div className="hero-art" aria-hidden="true">
-          <div className="sun" />
-          <div className="field field-back" />
-          <div className="field field-front" />
-          <div className="barn"><span /></div>
-          <div className="crop-lines" />
-          <p>CENTRAL<br />NEW YORK</p>
+
+        <div className="hero-shade" />
+
+        <div className="slideshow-content shell">
+          <p className="eyebrow">More than a map</p>
+
+          <h1>
+            Fresh local food.
+            <br />
+            <em>Available today.</em>
+          </h1>
+
+          <p className="lede">
+            Discover nearby farm stands, see what products are currently
+            available, and connect directly with the people growing your food.
+          </p>
+
+          <div className="hero-actions">
+            <a className="primary-button" href="#stands">
+              Find fresh food <span>↓</span>
+            </a>
+
+            <Link className="farmer-hero-button" href="/farmer">
+              Manage my farm &amp; products
+            </Link>
+
+            <Link className="hero-list-link" href="/list-your-farm">
+              Add or suggest a farm →
+            </Link>
+          </div>
+
+          <div className="hero-message-row">
+            <span>Find nearby farms</span>
+            <i>•</i>
+            <span>Check live products</span>
+            <i>•</i>
+            <span>Support local growers</span>
+          </div>
         </div>
       </header>
 
       <div className="marquee" aria-hidden="true">
-        <span>FARM FRESH</span><i>✦</i><span>LOCALLY GROWN</span><i>✦</i><span>COMMUNITY ROOTED</span><i>✦</i><span>CNY PROUD</span>
+        <span>FARM FRESH</span>
+        <i>✦</i>
+        <span>LIVE AVAILABILITY</span>
+        <i>✦</i>
+        <span>COMMUNITY ROOTED</span>
+        <i>✦</i>
+        <span>CNY PROUD</span>
       </div>
+
       <section id="stands" className="stands-section shell">
         <div className="section-heading">
-          <div><p className="eyebrow">Explore local farms</p><h2>Find what’s fresh near you.</h2></div>
-          <p>{stands.length} active {stands.length === 1 ? "stand" : "stands"}</p>
+          <div>
+            <p className="eyebrow">Explore local farms</p>
+            <h2>Find what’s fresh near you.</h2>
+          </div>
+
+          <p>
+            {stands.length} active{" "}
+            {stands.length === 1 ? "stand" : "stands"}
+          </p>
         </div>
 
         {!configured && (
-          <div className="notice"><strong>Almost ready.</strong> Add the Supabase publishable key in Vercel to load live farm stands.</div>
+          <div className="notice">
+            <strong>Almost ready.</strong> Add the Supabase publishable key in
+            Vercel to load live farm stands.
+          </div>
         )}
 
         {configured && stands.length === 0 ? (
-          <div className="empty-state"><span>🌱</span><h3>The first listings are taking root.</h3><p>Active farm stands will show here automatically.</p></div>
+          <div className="empty-state">
+            <span>🌱</span>
+            <h3>The first listings are taking root.</h3>
+            <p>Active farm stands will show here automatically.</p>
+          </div>
         ) : (
           <StandDirectory stands={stands} />
         )}
       </section>
 
-     
-
       <footer className="footer shell">
-        <a className="brand" href="#top"><span>FF</span> FarmFinder <b>CNY</b></a>
-       <p>
-  Helping Central New York find food grown closer to home.{" "}
- <Link href="/contact">Contact Ronald</Link>
-{" · "}
-<Link href="/privacy">Privacy Policy</Link>
-</p>
+        <a className="brand" href="#top">
+          <span>FF</span> FarmFinder <b>CNY</b>
+        </a>
+
+        <p>
+          Helping Central New York find food grown closer to home.{" "}
+          <Link href="/contact">Contact Ronald</Link>
+          {" · "}
+          <Link href="/privacy">Privacy Policy</Link>
+        </p>
       </footer>
     </main>
   );
