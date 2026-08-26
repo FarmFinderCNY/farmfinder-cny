@@ -162,6 +162,8 @@ async function requestUpdate(event: FormEvent<HTMLFormElement>) {
       No farms are connected to this account yet.
     </p>
   ) : (
+    <>
+    <p className="portal-guidance">Ownership approved. You can update your products below—changes to availability appear on the public website automatically.</p>
     <div className="portal-farms">
       {owned.map((farm) => (
         <article key={farm.id}>
@@ -184,12 +186,13 @@ async function requestUpdate(event: FormEvent<HTMLFormElement>) {
         </article>
       ))}
     </div>
+    </>
   )}
 </section>
       <section className="portal-section"><h2>Claim an existing listing</h2><p>Choose only a farm you own or officially represent. Claims require administrator approval.</p><div className="portal-farms">{
         claimable
   .filter((farm) => !requestedFarmId || farm.id === requestedFarmId)
-  .map((farm) => <article key={farm.id}><h3>{farm.name}</h3><p>{farm.city}, {farm.state}</p><button disabled={claimedIds.has(farm.id)}onClick={() => setClaiming(farm)}>{claimedIds.has(farm.id) ? "Claim pending" : "Request ownership"}</button></article>)}</div></section>
+  .map((farm) => <article key={farm.id}><h3>{farm.name}</h3><p>{farm.city}, {farm.state}</p>{claimedIds.has(farm.id) && <p className="claim-pending-note">Your request is waiting for FarmFinder approval. Once approved, this farm will move to “Farms you manage” above.</p>}<button disabled={claimedIds.has(farm.id)}onClick={() => setClaiming(farm)}>{claimedIds.has(farm.id) ? "Waiting for approval" : "Request ownership"}</button></article>)}</div></section>
     </>}
     {claiming && (
   <div className="portal-modal" role="dialog" aria-modal="true">
