@@ -131,6 +131,14 @@ async function requestUpdate(event: FormEvent<HTMLFormElement>) {
   if (!signedIn) return <form className="admin-login farmer-login" onSubmit={authenticate}>
     <p className="eyebrow">Farmer portal</p><h1>{mode === "signin" ? "Welcome back." : "Create your account."}</h1>
     <p>{mode === "signin" ? "Sign in to claim or update your farm listing." : "Use an email address you can access. You may need to confirm it."}</p>
+    <div className="farmer-login-steps" aria-label="How the farmer portal works">
+      <strong>New to FarmFinder?</strong>
+      <ol>
+        <li>Create your free account.</li>
+        <li>Request ownership of your farm or stand.</li>
+        <li>After approval, update what is available anytime.</li>
+      </ol>
+    </div>
     <label>Email address<input type="email" name="email" required autoComplete="username" /></label>
     <label>Password<input type="password" name="password" required minLength={8} autoComplete={mode === "signup" ? "new-password" : "current-password"} /></label>
     {error && <p className="form-error">{error}</p>}{message && <p className="form-success">{message}</p>}
