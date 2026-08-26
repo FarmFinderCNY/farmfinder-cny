@@ -81,6 +81,10 @@ h1 em { color:var(--orange); font-weight:450; }
 .farmer-login-steps strong { font-size:15px; }
 .farmer-login-steps ol { margin:10px 0 0; padding-left:22px; color:var(--muted); }
 .farmer-login-steps li + li { margin-top:6px; }
+.portal-guidance,.claim-pending-note { color:var(--muted); }
+.portal-guidance { margin:12px 0 18px; padding:14px 16px; border-left:4px solid var(--green); background:#eef5ea; }
+.portal-farms .claim-pending-note { margin:12px 0; font-size:14px; line-height:1.5; }
+.admin-review-message { margin-top:22px; }
 @media (max-width:850px) { .portal-farms { grid-template-columns:1fr 1fr; } }
 @media (max-width:560px) { .portal-farms { grid-template-columns:1fr; }.queue-title { align-items:flex-start; flex-direction:column; gap:20px; }.portal-modal form { padding:25px 18px; } }
 /* Live inventory on public farm cards */
