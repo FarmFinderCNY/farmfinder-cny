@@ -7,8 +7,8 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
   const directions = stand.latitude !== null && stand.longitude !== null
     ? `https://www.google.com/maps/dir/?api=1&destination=${stand.latitude},${stand.longitude}`
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
-   const availableToday = (stand.inventory ?? []).filter(
-  (item) => item.status !== "sold_out"
+ const availableToday = (stand.inventory ?? []).filter(
+  (item) => item.status === "available" || item.status === "low"
 );
   return (
  
