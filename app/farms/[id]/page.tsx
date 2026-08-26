@@ -22,6 +22,9 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
     ? `https://www.google.com/maps/dir/?api=1&destination=${stand.latitude},${stand.longitude}`
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
   const website = stand.website && (stand.website.startsWith("http") ? stand.website : `https://${stand.website}`);
+  const availableToday = (stand.inventory ?? []).filter(
+    (item) => item.status === "available" || item.status === "low"
+  );
 
   return <main>
     <nav className="nav shell"><Link className="brand" href="/"><span>FF</span> FarmFinder <b>CNY</b></Link><Link className="nav-link" href="/">← All farm stands</Link></nav>
@@ -31,6 +34,42 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
         <h1>{stand.name}</h1><p className="farm-address">{address}</p>
         {stand.description && <p className="farm-description">{stand.description}</p>}
         {stand.product_categories.length > 0 && <div className="category-chips">{stand.product_categories.map((category) => <span key={category}>{category}</span>)}</div>}
+        {availableToday.length > 0 && (
+          <section className="live-inventory" aria-labelledby="available-today-heading">
+            <div className="live-inventory-heading">
+              <div>
+                <p className="eyebrow">Live inventory</p>
+                <strong id="available-today-heading">Available today</strong>
+              </div>
+              {stand.inventory_updated_at && (
+                <span className="inventory-updated">
+                  Updated{" "}
+                  {new Date(stand.inventory_updated_at).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
+              )}
+            </div>
+            <div className="live-inventory-items">
+              {availableToday.map((item) => (
+                <div className="live-inventory-item" key={item.id}>
+                  <div className="inventory-product-main">
+                    <strong>{item.name}</strong>
+                    {item.status === "low" && <span className="inventory-low">Low stock</span>}
+                  </div>
+                  {(item.quantity || item.price) && (
+                    <div className="inventory-product-meta">
+                      {item.quantity && <span>{item.quantity}</span>}
+                      {item.price && <span>{item.price}</span>}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
         <dl className="farm-facts">
           {stand.hours && <><dt>Hours</dt><dd>{stand.hours}</dd></>}
           {stand.payment_methods && <><dt>Payment</dt><dd>{stand.payment_methods}</dd></>}
