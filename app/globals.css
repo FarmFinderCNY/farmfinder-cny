@@ -542,3 +542,35 @@ h1 em { color:var(--orange); font-weight:450; }
     opacity: 1;
   }
 }
+/* Available-today summary on farm cards */
+.inventory-summary {
+  display: grid;
+  gap: 5px;
+  margin: 14px 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(44, 112, 70, 0.22);
+  border-left: 4px solid #2c7046;
+  border-radius: 12px;
+  background: #f1f8ee;
+}
+
+.inventory-summary strong {
+  color: #245c3a;
+  font-size: 0.76rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.inventory-summary span {
+  color: #243c2c;
+  font-size: 0.93rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.inventory-summary span:last-child:not(:first-child) {
+  color: #68756c;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
