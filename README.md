@@ -31,8 +31,11 @@ Import `FarmFinderCNY/farmfinder-cny` in Vercel. It should detect Next.js automa
 
 - `NEXT_PUBLIC_SUPABASE_URL` = `https://impcokbejslrowjfclwy.supabase.co`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = your Supabase publishable key
+- `SUPABASE_SERVICE_ROLE_KEY` = your Supabase service-role key (server only; never expose this value in browser code)
+- `RESEND_API_KEY` = your Resend API key for submission and product-alert emails
+- `FARMFINDER_ADMIN_EMAIL` = the private address that receives new-listing notices
 
-No other build settings are required.
+No other build settings are required. Keep service-role and Resend keys private and never prefix them with `NEXT_PUBLIC_`.
 
 ## Map integration
 

@@ -26,6 +26,29 @@ export function FarmerInventory({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  async function notifySubscribers(inventoryItemId: string) {
+    try {
+      const { data } = await getBrowserSupabaseClient().auth.getSession();
+      const accessToken = data.session?.access_token;
+      if (!accessToken) return;
+
+      const response = await fetch("/api/inventory-alerts/dispatch", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ farmId, inventoryItemId }),
+      });
+      if (!response.ok) {
+        console.error("Unable to deliver inventory alerts:", await response.text());
+      }
+    } catch (notificationError) {
+      // Inventory updates should still succeed if the email provider is temporarily unavailable.
+      console.error("Inventory alert delivery failed:", notificationError);
+    }
+  }
+
 const loadInventory = useCallback(async () => {
   setLoading(true);
   setError("");
@@ -58,7 +81,8 @@ const loadInventory = useCallback(async () => {
 }, [farmId]);
 
   useEffect(() => {
-    void loadInventory();
+    const timeout = window.setTimeout(() => void loadInventory(), 0);
+    return () => window.clearTimeout(timeout);
   }, [loadInventory]);
 
  async function addProduct(event: FormEvent<HTMLFormElement>) {
@@ -74,7 +98,7 @@ const loadInventory = useCallback(async () => {
   setMessage("");
 
   try {
-    const { error: insertError } =
+    const { data: insertedItem, error: insertError } =
       await getBrowserSupabaseClient()
         .from("farm_inventory")
         .insert({
@@ -84,7 +108,9 @@ const loadInventory = useCallback(async () => {
           quantity: String(values.get("quantity") ?? "").trim() || null,
           status: "available",
           updated_at: new Date().toISOString(),
-        });
+        })
+        .select("id")
+        .single();
 
     if (insertError) {
       setError(insertError.message);
@@ -104,6 +130,7 @@ const loadInventory = useCallback(async () => {
 
     setMessage("Product added.");
     await loadInventory();
+    if (insertedItem) void notifySubscribers(insertedItem.id);
   } catch (err) {
     console.error("Unable to add inventory product:", err);
     setError(
@@ -146,6 +173,10 @@ const loadInventory = useCallback(async () => {
 
       setMessage("Inventory updated.");
       await loadInventory();
+      const nextStatus = changes.status ?? item.status;
+      if (nextStatus === "available" || nextStatus === "low") {
+        void notifySubscribers(item.id);
+      }
     }
 
     setLoading(false);
