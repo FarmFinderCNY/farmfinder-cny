@@ -33,7 +33,12 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
         <div className="card-topline"><span className="status"><i /> Active listing</span>{stand.is_verified && <span className="verified">✓ Verified</span>}</div>
         <h1>{stand.name}</h1><p className="farm-address">{address}</p>
         {stand.description && <p className="farm-description">{stand.description}</p>}
-        {stand.product_categories.length > 0 && <div className="category-chips">{stand.product_categories.map((category) => <span key={category}>{category}</span>)}</div>}
+        {stand.product_categories.length > 0 && (
+          <div className="category-group">
+            <p className="category-label">Usually offers</p>
+            <div className="category-chips">{stand.product_categories.map((category) => <span key={category}>{category}</span>)}</div>
+          </div>
+        )}
         {availableToday.length > 0 && (
           <section className="live-inventory" aria-labelledby="available-today-heading">
             <div className="live-inventory-heading">
@@ -69,6 +74,16 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
               ))}
             </div>
           </section>
+        )}
+        {availableToday.length === 0 && (
+          <div className="availability-note">
+            <strong>Live availability</strong>
+            <span>
+              {stand.inventory_updated_at
+                ? "No products are currently marked available. Contact the farm before making a special trip."
+                : "Live availability hasn’t been updated yet. Contact the farm before making a special trip."}
+            </span>
+          </div>
         )}
         <dl className="farm-facts">
           {stand.hours && <><dt>Hours</dt><dd>{stand.hours}</dd></>}

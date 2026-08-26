@@ -50,7 +50,12 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
   </div>
 )}
  
-      {stand.product_categories.length > 0 && <div className="category-chips">{stand.product_categories.slice(0, 4).map((category) => <span key={category}>{category}</span>)}</div>}
+      {stand.product_categories.length > 0 && (
+        <div className="category-group">
+          <p className="category-label">Usually offers</p>
+          <div className="category-chips">{stand.product_categories.slice(0, 4).map((category) => <span key={category}>{category}</span>)}</div>
+        </div>
+      )}
     <div className="card-links">
       
         <Link href={`/farms/${stand.id}`}>View details</Link>
