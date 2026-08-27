@@ -10,8 +10,9 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
   const availableToday = (stand.inventory ?? []).filter(
     (item) => item.status === "available" || item.status === "low"
   );
-  const verifiedWithinSevenDays = stand.is_verified && Date.now() - new Date(stand.created_at).getTime() <= 7 * 24 * 60 * 60 * 1000;
-  const categoryLabel = verifiedWithinSevenDays && !stand.inventory_updated_at ? "Recently verified selection" : "Usually offers";
+  const categoryLabel = stand.is_verified && !stand.inventory_updated_at
+    ? "Recently verified selection"
+    : "Usually offers";
 
   return (
     <article className="stand-card">
