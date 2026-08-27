@@ -163,7 +163,7 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
           matchesCategory,
           availabilityRank,
           distance: userLocation ? distanceInMiles(userLocation, stand) : null,
-          freshness: stand.inventory_updated_at ? new Date(stand.inventory_updated_at).getTime() : 0,
+          freshness: stand.farmer_inventory_updated_at ? new Date(stand.farmer_inventory_updated_at).getTime() : 0,
         };
       })
       .filter((result) => result.matchesSearch && result.matchesCategory)

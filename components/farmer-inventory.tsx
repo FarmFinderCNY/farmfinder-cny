@@ -125,6 +125,7 @@ const loadInventory = useCallback(async () => {
       .from("farm_stands")
       .update({
         inventory_updated_at: updatedAt,
+        farmer_inventory_updated_at: updatedAt,
       })
       .eq("id", farmId);
 
@@ -168,6 +169,7 @@ const loadInventory = useCallback(async () => {
         .from("farm_stands")
         .update({
           inventory_updated_at: updatedAt,
+          farmer_inventory_updated_at: updatedAt,
         })
         .eq("id", farmId);
 
@@ -209,6 +211,7 @@ const loadInventory = useCallback(async () => {
         .from("farm_stands")
         .update({
           inventory_updated_at: updatedAt,
+          farmer_inventory_updated_at: updatedAt,
         })
         .eq("id", farmId);
 

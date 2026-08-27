@@ -25,13 +25,10 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
   const availableToday = (stand.inventory ?? []).filter(
     (item) => item.status === "available" || item.status === "low"
   );
-  const verifiedAt = stand.verified_at ? new Date(stand.verified_at).getTime() : null;
-  const verifiedWithinSevenDays = Boolean(
-    stand.is_verified && verifiedAt && Date.now() - verifiedAt >= 0 && Date.now() - verifiedAt < 7 * 24 * 60 * 60 * 1000
+  const farmerUpdatedAt = stand.farmer_inventory_updated_at ? new Date(stand.farmer_inventory_updated_at).getTime() : null;
+  const updatedWithinSevenDays = Boolean(
+    farmerUpdatedAt && Date.now() - farmerUpdatedAt >= 0 && Date.now() - farmerUpdatedAt < 7 * 24 * 60 * 60 * 1000
   );
-  const categoryLabel = verifiedWithinSevenDays && !stand.inventory_updated_at
-    ? "Recently verified selection"
-    : "Usually offers";
 
   return <main>
     <nav className="nav shell"><Link className="brand" href="/"><span>FF</span> FarmFinder <b>CNY</b></Link><Link className="nav-link" href="/">← All farm stands</Link></nav>
@@ -40,23 +37,23 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
         <div className="card-topline"><span className="status"><i /> Active listing</span>{stand.is_verified && <span className="verified">✓ Verified</span>}</div>
         <h1>{stand.name}</h1><p className="farm-address">{address}</p>
         {stand.description && <p className="farm-description">{stand.description}</p>}
-        {stand.product_categories.length > 0 && (
+        {stand.farmer_inventory_updated_at && !updatedWithinSevenDays && stand.product_categories.length > 0 && (
           <div className="category-group">
-            <p className="category-label">{categoryLabel}</p>
+            <p className="category-label">Usually offers</p>
             <div className="category-chips">{stand.product_categories.map((category) => <span key={category}>{category}</span>)}</div>
           </div>
         )}
-        {availableToday.length > 0 && (
+        {updatedWithinSevenDays && availableToday.length > 0 && (
           <section className="live-inventory" aria-labelledby="available-today-heading">
             <div className="live-inventory-heading">
               <div>
                 <p className="eyebrow">Live inventory</p>
                 <strong id="available-today-heading">Available today</strong>
               </div>
-              {stand.inventory_updated_at && (
+              {stand.farmer_inventory_updated_at && (
                 <span className="inventory-updated">
                   Updated{" "}
-                  {new Date(stand.inventory_updated_at).toLocaleDateString("en-US", {
+                  {new Date(stand.farmer_inventory_updated_at).toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",
                     year: "numeric",
@@ -82,13 +79,15 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
             </div>
           </section>
         )}
-        {availableToday.length === 0 && (
+        {(!updatedWithinSevenDays || availableToday.length === 0) && (
           <div className="availability-note">
             <strong>Live availability</strong>
             <span>
-              {stand.inventory_updated_at
-                ? "No products are currently marked available. Contact the farm before making a special trip."
-                : "Live availability hasn’t been updated yet. Contact the farm before making a special trip."}
+              {!stand.farmer_inventory_updated_at
+                ? "Live availability hasn’t been confirmed by the farm yet. Contact the farm before making a special trip."
+                : !updatedWithinSevenDays
+                  ? "The farm’s last inventory update is more than seven days old. Contact the farm before making a special trip."
+                  : "No products are currently marked available. Contact the farm before making a special trip."}
             </span>
           </div>
         )}

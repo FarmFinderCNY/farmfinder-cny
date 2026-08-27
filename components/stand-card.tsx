@@ -10,7 +10,7 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
   const availableToday = (stand.inventory ?? []).filter(
     (item) => item.status === "available" || item.status === "low"
   );
-  const inventoryUpdatedAt = stand.inventory_updated_at ? new Date(stand.inventory_updated_at).getTime() : null;
+  const inventoryUpdatedAt = stand.farmer_inventory_updated_at ? new Date(stand.farmer_inventory_updated_at).getTime() : null;
   const updatedWithinSevenDays = Boolean(
     inventoryUpdatedAt && Date.now() - inventoryUpdatedAt >= 0 && Date.now() - inventoryUpdatedAt < 7 * 24 * 60 * 60 * 1000
   );
@@ -33,13 +33,13 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
             {availableToday.slice(0, 3).map((item) => item.status === "low" ? `${item.name} (low)` : item.name).join(" · ")}
             {availableToday.length > 3 ? ` · +${availableToday.length - 3} more` : ""}
           </span>
-          {stand.inventory_updated_at && (
-            <span>Updated {new Date(stand.inventory_updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+          {stand.farmer_inventory_updated_at && (
+            <span>Updated {new Date(stand.farmer_inventory_updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
           )}
         </div>
       )}
 
-      {stand.inventory_updated_at && !updatedWithinSevenDays && stand.product_categories.length > 0 && (
+      {stand.farmer_inventory_updated_at && !updatedWithinSevenDays && stand.product_categories.length > 0 && (
         <div className="category-group">
           <p className="category-label">Usually offers</p>
           <div className="category-chips">{stand.product_categories.slice(0, 4).map((category) => <span key={category}>{category}</span>)}</div>

@@ -20,6 +20,7 @@ export type FarmStand = {
   is_active: boolean;
   created_at: string;
   inventory_updated_at: string | null;
+  farmer_inventory_updated_at?: string | null;
   submission_type?: "owner" | "community" | null;
   submitted_by_display_name?: string | null;
 
