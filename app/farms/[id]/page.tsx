@@ -25,6 +25,9 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
   const availableToday = (stand.inventory ?? []).filter(
     (item) => item.status === "available" || item.status === "low"
   );
+  const categoryLabel = stand.is_verified && !stand.inventory_updated_at
+    ? "Recently verified selection"
+    : "Usually offers";
 
   return <main>
     <nav className="nav shell"><Link className="brand" href="/"><span>FF</span> FarmFinder <b>CNY</b></Link><Link className="nav-link" href="/">← All farm stands</Link></nav>
@@ -35,7 +38,7 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
         {stand.description && <p className="farm-description">{stand.description}</p>}
         {stand.product_categories.length > 0 && (
           <div className="category-group">
-            <p className="category-label">Usually offers</p>
+            <p className="category-label">{categoryLabel}</p>
             <div className="category-chips">{stand.product_categories.map((category) => <span key={category}>{category}</span>)}</div>
           </div>
         )}
