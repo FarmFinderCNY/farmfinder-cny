@@ -26,19 +26,16 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
       <p className="location">{[stand.city, stand.state].filter(Boolean).join(", ") || location || "Central New York"}{distanceMiles !== null && <strong className="distance"> · {distanceMiles < 10 ? distanceMiles.toFixed(1) : Math.round(distanceMiles)} miles away</strong>}</p>
       {stand.submission_type === "community" && <p className="community-attribution">Community submitted{stand.submitted_by_display_name ? ` by ${stand.submitted_by_display_name}` : ""} · Not yet owner-verified</p>}
 
-      {updatedWithinSevenDays && availableToday.length > 0 && (
+            {updatedWithinSevenDays && availableToday.length > 0 && (
         <div className="inventory-summary">
           <strong>Available today</strong>
           <span>
             {availableToday.slice(0, 3).map((item) => item.status === "low" ? `${item.name} (low)` : item.name).join(" · ")}
             {availableToday.length > 3 ? ` · +${availableToday.length - 3} more` : ""}
           </span>
-         
-
-      {stand.farmer_inventory_updated_at && !updatedWithinSevenDays && stand.product_categories.length > 0 && (
-        <div className="category-group">
-          <p className="category-label">Usually offers</p>
-          <div className="category-chips">{stand.product_categories.slice(0, 4).map((category) => <span key={category}>{category}</span>)}</div>
+          {stand.farmer_inventory_updated_at && (
+            <span>Updated {new Date(stand.farmer_inventory_updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+          )}
         </div>
       )}
       <div className="card-links">
