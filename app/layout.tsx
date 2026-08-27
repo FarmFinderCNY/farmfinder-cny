@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
 import "./globals.css";
+import "./hero-fix.css";
 import { PwaRegister } from "@/components/pwa-register";
 
 const sans = DM_Sans({ subsets: ["latin"], variable: "--font-sans" });
