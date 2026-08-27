@@ -38,6 +38,15 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
           )}
         </div>
       )}
+      {(!updatedWithinSevenDays || availableToday.length === 0) && stand.product_categories.length > 0 && (
+  <div className="category-group">
+    <div className="category-chips">
+      {stand.product_categories.slice(0, 4).map((category) => (
+        <span key={category}>{category}</span>
+      ))}
+    </div>
+  </div>
+)}
       <div className="card-links">
         <Link href={`/farms/${stand.id}`}>View details</Link>
         <a href={directions} target="_blank" rel="noreferrer">Directions ↗</a>
