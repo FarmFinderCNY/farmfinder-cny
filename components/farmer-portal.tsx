@@ -147,7 +147,7 @@ async function requestUpdate(event: FormEvent<HTMLFormElement>) {
   </form>;
 
   const owned = farms.filter((farm) => farm.owner_user_id === userId);
-  const claimable = farms.filter((farm) => !farm.owner_user_id);
+  const claimable = farms.filter((farm) => !farm.owner_user_id && !farm.is_verified);
   const claimedIds = new Set(claims.filter((claim) => claim.status === "pending").map((claim) => claim.farm_id));
 
   return <section className="farmer-panel">
