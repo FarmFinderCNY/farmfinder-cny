@@ -29,6 +29,41 @@ export default async function Home() {
           <div className="hero-slide hero-slide-two" />
           <div className="hero-slide hero-slide-three" />
           <div className="hero-slide hero-slide-four" />
+          <div className="hero-slide hero-slide-five">
+            <div className="app-story-scene">
+              <div className="app-story-label">See what&apos;s fresh before you go</div>
+              <div className="app-story-phone">
+                <div className="app-story-notch" />
+                <div className="app-story-screen">
+                  <div className="app-story-brand">FarmFinder CNY</div>
+                  <div className="app-story-search">Search farms or products</div>
+                  <div className="app-story-chips">
+                    <span>Sweet Corn</span>
+                    <span>Tomatoes</span>
+                    <span>Peppers</span>
+                  </div>
+                  <div className="app-story-map">
+                    <i className="pin pin-one">●</i>
+                    <i className="pin pin-two">●</i>
+                    <i className="pin pin-three">●</i>
+                  </div>
+                  <div className="app-story-farm">
+                    <strong>Nearby Farm Stand</strong>
+                    <small>● Available today</small>
+                    <div><span>🌽 Sweet Corn</span><b>In stock</b></div>
+                    <div><span>🍅 Tomatoes</span><b>In stock</b></div>
+                    <button type="button" tabIndex={-1}>Directions</button>
+                  </div>
+                </div>
+              </div>
+              <div className="app-story-stand">
+                <span>FRESH</span>
+                <strong>LOCAL</strong>
+                <em>PRODUCE</em>
+                <div>🌽 🍅 🫑</div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="hero-shade" />
