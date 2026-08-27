@@ -10,13 +10,10 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
   const availableToday = (stand.inventory ?? []).filter(
     (item) => item.status === "available" || item.status === "low"
   );
-  const verifiedAt = stand.verified_at ? new Date(stand.verified_at).getTime() : null;
-  const verifiedWithinSevenDays = Boolean(
-    stand.is_verified && verifiedAt && Date.now() - verifiedAt >= 0 && Date.now() - verifiedAt < 7 * 24 * 60 * 60 * 1000
+  const inventoryUpdatedAt = stand.inventory_updated_at ? new Date(stand.inventory_updated_at).getTime() : null;
+  const updatedWithinSevenDays = Boolean(
+    inventoryUpdatedAt && Date.now() - inventoryUpdatedAt >= 0 && Date.now() - inventoryUpdatedAt < 7 * 24 * 60 * 60 * 1000
   );
-  const categoryLabel = verifiedWithinSevenDays && !stand.inventory_updated_at
-    ? "Recently verified selection"
-    : "Usually offers";
 
   return (
     <article className="stand-card">
@@ -29,7 +26,7 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
       <p className="location">{[stand.city, stand.state].filter(Boolean).join(", ") || location || "Central New York"}{distanceMiles !== null && <strong className="distance"> · {distanceMiles < 10 ? distanceMiles.toFixed(1) : Math.round(distanceMiles)} miles away</strong>}</p>
       {stand.submission_type === "community" && <p className="community-attribution">Community submitted{stand.submitted_by_display_name ? ` by ${stand.submitted_by_display_name}` : ""} · Not yet owner-verified</p>}
 
-      {availableToday.length > 0 && (
+      {updatedWithinSevenDays && availableToday.length > 0 && (
         <div className="inventory-summary">
           <strong>Available today</strong>
           <span>
@@ -42,9 +39,9 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
         </div>
       )}
 
-      {stand.product_categories.length > 0 && (
+      {stand.inventory_updated_at && !updatedWithinSevenDays && stand.product_categories.length > 0 && (
         <div className="category-group">
-          <p className="category-label">{categoryLabel}</p>
+          <p className="category-label">Usually offers</p>
           <div className="category-chips">{stand.product_categories.slice(0, 4).map((category) => <span key={category}>{category}</span>)}</div>
         </div>
       )}

@@ -278,7 +278,7 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
 
     <aside className="availability-guide" aria-label="How product availability is shown">
       <strong>How availability works</strong>
-      <p><b>Available today</b> appears when a farmer has recently updated their products. <b>Usually offers</b> shows the farm’s general selection and may not reflect what is currently in stock.</p>
+      <p><b>Available today</b> appears for seven days after a farmer updates their products. After that, <b>Usually offers</b> shows their general selection until they update again. Farms that have not posted their first update do not show availability wording.</p>
     </aside>
 
     {filtered.length > 0 ? <>
