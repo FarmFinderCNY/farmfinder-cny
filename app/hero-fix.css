@@ -1,0 +1,165 @@
+/* Restored homepage rotating farm-story hero */
+.slideshow-hero {
+  position: relative;
+  min-height: 650px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  color: white;
+  background: #183c2b;
+}
+
+.hero-slides,
+.hero-shade,
+.hero-slide {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-slide {
+  opacity: 0;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  animation: farmHeroSlideshow 24s infinite;
+  transform: scale(1.03);
+}
+
+.hero-slide-one {
+  background-image: url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=2000&q=85");
+  animation-delay: 0s;
+}
+
+.hero-slide-two {
+  background-image: url("https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=2000&q=85");
+  animation-delay: 6s;
+}
+
+.hero-slide-three {
+  background-image: url("https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=2000&q=85");
+  animation-delay: 12s;
+}
+
+.hero-slide-four {
+  background-image: url("https://images.unsplash.com/photo-1471193945509-9ad0617afabf?auto=format&fit=crop&w=2000&q=85");
+  animation-delay: 18s;
+}
+
+@keyframes farmHeroSlideshow {
+  0% { opacity: 0; transform: scale(1.03); }
+  5% { opacity: 1; }
+  22% { opacity: 1; }
+  27% { opacity: 0; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+
+.hero-shade {
+  z-index: 1;
+  background:
+    linear-gradient(90deg, rgba(7, 24, 16, 0.9) 0%, rgba(7, 24, 16, 0.68) 48%, rgba(7, 24, 16, 0.24) 100%),
+    linear-gradient(0deg, rgba(7, 24, 16, 0.45) 0%, transparent 55%);
+}
+
+.slideshow-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding-top: 90px;
+  padding-bottom: 90px;
+}
+
+.slideshow-content .eyebrow {
+  color: #ffd978;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.slideshow-content h1 {
+  max-width: 820px;
+  margin: 14px 0 20px;
+  color: white;
+  font-size: clamp(3rem, 7vw, 6.5rem);
+  line-height: 0.94;
+  letter-spacing: -0.055em;
+  text-shadow: 0 3px 20px rgba(0, 0, 0, 0.35);
+}
+
+.slideshow-content h1 em {
+  color: #ffd978;
+  font-style: italic;
+}
+
+.slideshow-content .lede {
+  max-width: 670px;
+  color: rgba(255, 255, 255, 0.94);
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  line-height: 1.65;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+}
+
+.slideshow-content .hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 30px;
+}
+
+.farmer-hero-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 50px;
+  padding: 12px 20px;
+  border: 2px solid white;
+  border-radius: 999px;
+  color: white;
+  font-weight: 800;
+  text-decoration: none;
+  backdrop-filter: blur(6px);
+  background: rgba(12, 46, 30, 0.35);
+}
+
+.farmer-hero-button:hover {
+  color: #173d2c;
+  background: white;
+}
+
+.hero-list-link {
+  color: white;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+
+.hero-message-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 42px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.hero-message-row i {
+  color: #ffd978;
+  font-style: normal;
+}
+
+@media (max-width: 700px) {
+  .slideshow-hero { min-height: 610px; }
+  .slideshow-content { padding-top: 65px; padding-bottom: 65px; }
+  .hero-shade { background: rgba(7, 24, 16, 0.68); }
+  .slideshow-content h1 { font-size: clamp(2.8rem, 14vw, 4.3rem); }
+  .slideshow-content .hero-actions { align-items: stretch; flex-direction: column; }
+  .slideshow-content .hero-actions a { justify-content: center; width: 100%; text-align: center; }
+  .hero-message-row { justify-content: center; font-size: 0.72rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide { animation: none; }
+  .hero-slide-one { opacity: 1; }
+}
