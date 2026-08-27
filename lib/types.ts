@@ -16,6 +16,7 @@ export type FarmStand = {
   photo_url: string | null;
   owner_user_id?: string | null;
   is_verified: boolean;
+  verified_at?: string | null;
   is_active: boolean;
   created_at: string;
   inventory_updated_at: string | null;
