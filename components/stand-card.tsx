@@ -7,11 +7,13 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
   const directions = stand.latitude !== null && stand.longitude !== null
     ? `https://www.google.com/maps/dir/?api=1&destination=${stand.latitude},${stand.longitude}`
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
- const availableToday = (stand.inventory ?? []).filter(
-  (item) => item.status === "available" || item.status === "low"
-);
+  const availableToday = (stand.inventory ?? []).filter(
+    (item) => item.status === "available" || item.status === "low"
+  );
+  const verifiedWithinSevenDays = stand.is_verified && Date.now() - new Date(stand.created_at).getTime() <= 7 * 24 * 60 * 60 * 1000;
+  const categoryLabel = verifiedWithinSevenDays && !stand.inventory_updated_at ? "Recently verified selection" : "Usually offers";
+
   return (
- 
     <article className="stand-card">
       {stand.photo_url && <img className="stand-photo" src={stand.photo_url} alt={`${stand.name} farm`} />}
       <div className="card-topline">
@@ -21,43 +23,27 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
       <h3>{stand.name}</h3>
       <p className="location">{[stand.city, stand.state].filter(Boolean).join(", ") || location || "Central New York"}{distanceMiles !== null && <strong className="distance"> · {distanceMiles < 10 ? distanceMiles.toFixed(1) : Math.round(distanceMiles)} miles away</strong>}</p>
       {stand.submission_type === "community" && <p className="community-attribution">Community submitted{stand.submitted_by_display_name ? ` by ${stand.submitted_by_display_name}` : ""} · Not yet owner-verified</p>}
-     
-    {availableToday.length > 0 && (
-  <div className="inventory-summary">
-    <strong>Available today</strong>
 
-    <span>
-      {availableToday
-        .slice(0, 3)
-        .map((item) =>
-          item.status === "low" ? `${item.name} (low)` : item.name
-        )
-        .join(" · ")}
-      {availableToday.length > 3
-        ? ` · +${availableToday.length - 3} more`
-        : ""}
-    </span>
+      {availableToday.length > 0 && (
+        <div className="inventory-summary">
+          <strong>Available today</strong>
+          <span>
+            {availableToday.slice(0, 3).map((item) => item.status === "low" ? `${item.name} (low)` : item.name).join(" · ")}
+            {availableToday.length > 3 ? ` · +${availableToday.length - 3} more` : ""}
+          </span>
+          {stand.inventory_updated_at && (
+            <span>Updated {new Date(stand.inventory_updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+          )}
+        </div>
+      )}
 
-    {stand.inventory_updated_at && (
-      <span>
-        Updated{" "}
-        {new Date(stand.inventory_updated_at).toLocaleDateString(undefined, {
-          month: "short",
-          day: "numeric",
-        })}
-      </span>
-    )}
-  </div>
-)}
- 
       {stand.product_categories.length > 0 && (
         <div className="category-group">
-          <p className="category-label">Usually offers</p>
+          <p className="category-label">{categoryLabel}</p>
           <div className="category-chips">{stand.product_categories.slice(0, 4).map((category) => <span key={category}>{category}</span>)}</div>
         </div>
       )}
-    <div className="card-links">
-      
+      <div className="card-links">
         <Link href={`/farms/${stand.id}`}>View details</Link>
         <a href={directions} target="_blank" rel="noreferrer">Directions ↗</a>
       </div>
