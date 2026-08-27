@@ -33,11 +33,7 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
             {availableToday.slice(0, 3).map((item) => item.status === "low" ? `${item.name} (low)` : item.name).join(" · ")}
             {availableToday.length > 3 ? ` · +${availableToday.length - 3} more` : ""}
           </span>
-          {stand.farmer_inventory_updated_at && (
-            <span>Updated {new Date(stand.farmer_inventory_updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
-          )}
-        </div>
-      )}
+         
 
       {stand.farmer_inventory_updated_at && !updatedWithinSevenDays && stand.product_categories.length > 0 && (
         <div className="category-group">
