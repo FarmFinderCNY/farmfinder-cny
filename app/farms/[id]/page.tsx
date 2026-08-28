@@ -40,7 +40,8 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
           <span className="status"><i /> Active listing</span>
           <div className="verification-badges">
             {stand.is_verified && <span className="verified">✓ Listing verified</span>}
-            {stand.owner_user_id && <span className="owner-managed">🌾 Owner managed</span>}
+            {stand.is_verified && <span className="owner-verified">🌾 Owner verified</span>}
+            {stand.owner_user_id && <span className="owner-managed">● Owner managed</span>}
           </div>
         </div>
         <h1>{stand.name}</h1><p className="farm-address">{address}</p>
@@ -137,7 +138,7 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
       className="text-button"
       href={`/farms/${stand.id}/claim`}
     >
-      🌾 Own this farm? Claim it
+      🌾 Manage this farm? Connect account
     </Link>
   )}
     <NotifyMeForm farmId={stand.id} />     

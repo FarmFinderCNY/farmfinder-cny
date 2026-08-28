@@ -24,7 +24,8 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
         <span className="status"><i /> Active listing</span>
         <div className="verification-badges">
           {stand.is_verified && <span className="verified">✓ Listing verified</span>}
-          {stand.owner_user_id && <span className="owner-managed">🌾 Owner managed</span>}
+          {stand.is_verified && <span className="owner-verified">🌾 Owner verified</span>}
+          {stand.owner_user_id && <span className="owner-managed">● Owner managed</span>}
         </div>
       </div>
       <h3>{stand.name}</h3>
