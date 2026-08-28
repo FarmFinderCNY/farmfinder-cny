@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import type { FarmStand } from "@/lib/types";
 import Link from "next/link";
+import { getGrowingPracticeCardBadge } from "@/lib/growing-practices";
 
 export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; distanceMiles?: number | null }) {
   const location = [stand.address, stand.city, stand.state, stand.zip_code].filter(Boolean).join(", ");
@@ -14,6 +15,7 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
   const updatedWithinSevenDays = Boolean(
     inventoryUpdatedAt && Date.now() - inventoryUpdatedAt >= 0 && Date.now() - inventoryUpdatedAt < 7 * 24 * 60 * 60 * 1000
   );
+  const practiceBadge = getGrowingPracticeCardBadge(stand.growing_practices ?? [], stand.organic_certifier);
 
   return (
     <article className="stand-card">
@@ -24,6 +26,7 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
       </div>
       <h3>{stand.name}</h3>
       <p className="location">{[stand.city, stand.state].filter(Boolean).join(", ") || location || "Central New York"}{distanceMiles !== null && <strong className="distance"> · {distanceMiles < 10 ? distanceMiles.toFixed(1) : Math.round(distanceMiles)} miles away</strong>}</p>
+      {practiceBadge && <span className="practice-card-badge">🌱 {practiceBadge}</span>}
       {stand.submission_type === "community" && <p className="community-attribution">Community submitted{stand.submitted_by_display_name ? ` by ${stand.submitted_by_display_name}` : ""} · Not yet owner-verified</p>}
 
             {updatedWithinSevenDays && availableToday.length > 0 && (

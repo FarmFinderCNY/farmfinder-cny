@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getActiveFarmStand } from "@/lib/supabase";
 import NotifyMeForm from "@/app/components/NotifyMeForm";
+import { getGrowingPracticeLabel } from "@/lib/growing-practices";
 export const revalidate = 300;
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -37,6 +38,13 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
         <div className="card-topline"><span className="status"><i /> Active listing</span>{stand.is_verified && <span className="verified">✓ Verified</span>}</div>
         <h1>{stand.name}</h1><p className="farm-address">{address}</p>
         {stand.description && <p className="farm-description">{stand.description}</p>}
+        {(stand.growing_practices?.length ?? 0) > 0 && <section className="growing-practices" aria-labelledby="growing-practices-heading">
+          <div className="growing-practices-heading"><div><p className="eyebrow">Reported by the farm</p><h2 id="growing-practices-heading">Growing practices</h2></div><span>🌱</span></div>
+          <div className="practice-chips">{stand.growing_practices?.map((practice) => <span key={practice}>{getGrowingPracticeLabel(practice)}</span>)}</div>
+          {stand.growing_practices?.includes("certified_organic") && stand.organic_certifier && <p className="organic-certifier"><strong>Certifying organization:</strong> {stand.organic_certifier}</p>}
+          {stand.growing_practices_note && <p className="practice-note">{stand.growing_practices_note}</p>}
+          <p className="practice-disclaimer">These practices are reported by the farm and may vary by crop. Contact the farm with specific questions.</p>
+        </section>}
         {stand.farmer_inventory_updated_at && !updatedWithinSevenDays && stand.product_categories.length > 0 && (
           <div className="category-group">
             <p className="category-label">Usually offers</p>

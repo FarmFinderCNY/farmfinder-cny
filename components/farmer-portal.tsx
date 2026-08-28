@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
 import type { FarmStand } from "@/lib/types";
+import { FarmerGrowingPractices } from "@/components/farmer-growing-practices";
 
 type Claim = { id: string; farm_id: string; status: string; created_at: string };
 
@@ -26,9 +27,16 @@ export function FarmerPortal() {
     const { data: userData } = await supabase.auth.getUser();
     const id = userData.user?.id ?? "";
     setUserId(id);
+    const loadFarms = async () => {
+      const result = await supabase.from("farm_stands").select("id,owner_user_id,name,address,city,state,zip_code,latitude,longitude,description,phone,website,hours,payment_methods,product_categories,photo_url,is_verified,is_active,created_at,growing_practices,growing_practices_note,organic_certifier");
+      if (result.error?.message.match(/growing_practices|organic_certifier/)) {
+        return supabase.from("farm_stands").select("id,owner_user_id,name,address,city,state,zip_code,latitude,longitude,description,phone,website,hours,payment_methods,product_categories,photo_url,is_verified,is_active,created_at");
+      }
+      return result;
+    };
     const [{ data: farmData, error: farmError }, { data: claimData, error: claimError }] = await Promise.all([
-     supabase.from("farm_stands").select("id,owner_user_id,name,address,city,state,zip_code,latitude,longitude,description,phone,website,hours,payment_methods,product_categories,photo_url,is_verified,is_active,created_at"),
-     supabase.from("farm_claim_requests").select("id,farm_id,status,created_at").order("created_at", { ascending: false }),
+      loadFarms(),
+      supabase.from("farm_claim_requests").select("id,farm_id,status,created_at").order("created_at", { ascending: false }),
     ]);
     if (farmError || claimError) setError(farmError?.message ?? claimError?.message ?? "Unable to load portal.");
     setFarms((farmData ?? []) as FarmStand[]); setClaims((claimData ?? []) as Claim[]); setLoading(false);
@@ -183,6 +191,12 @@ async function requestUpdate(event: FormEvent<HTMLFormElement>) {
             farmId={farm.id}
             farmName={farm.name}
           />
+          {"growing_practices" in farm && <FarmerGrowingPractices
+              farmId={farm.id}
+              initialPractices={farm.growing_practices ?? []}
+              initialNote={farm.growing_practices_note}
+              initialOrganicCertifier={farm.organic_certifier}
+            />}
         </article>
       ))}
     </div>

@@ -21,6 +21,9 @@ export type FarmStand = {
   created_at: string;
   inventory_updated_at: string | null;
   farmer_inventory_updated_at?: string | null;
+  growing_practices?: string[];
+  growing_practices_note?: string | null;
+  organic_certifier?: string | null;
   submission_type?: "owner" | "community" | null;
   submitted_by_display_name?: string | null;
 
