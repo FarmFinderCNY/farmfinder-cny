@@ -49,7 +49,11 @@ export function FarmerGrowingPractices({
   return <form className="practice-editor" onSubmit={save}>
     <div className="practice-editor-heading">
       <div><h4>Growing practices</h4><p>Choose every statement that accurately describes this farm. Practices may vary by crop.</p></div>
-      <span>Reported by your farm</span>
+      <span>Optional · Reported by your farm</span>
+    </div>
+    <div className="practice-honesty-note">
+      <strong>Honesty builds trust.</strong>
+      <p>You want customers to be honest with you. Please be honest with them—select only practices you can confidently stand behind.</p>
     </div>
     <div className="practice-options">
       {GROWING_PRACTICE_OPTIONS.map((option) => <label className={selected.includes(option.value) ? "selected" : ""} key={option.value}>
@@ -59,7 +63,7 @@ export function FarmerGrowingPractices({
     </div>
     {selected.includes("certified_organic") && <label className="practice-field">Certifying organization<input name="organic_certifier" defaultValue={initialOrganicCertifier ?? ""} placeholder="Required, for example: NOFA-NY Certified Organic" /></label>}
     <label className="practice-field">Optional explanation<textarea name="growing_practices_note" defaultValue={initialNote ?? ""} rows={3} placeholder="Tell shoppers how your methods work or which crops they apply to." /></label>
-    <p className="practice-fine-print">Only choose claims you can support. FarmFinder labels these practices as farm-reported so shoppers can ask you for details.</p>
+    <p className="practice-fine-print">You can leave this entire section blank. FarmFinder labels selected practices as farm-reported so shoppers can ask you for details.</p>
     {error && <p className="form-error" role="alert">{error}</p>}{message && <p className="form-success">{message}</p>}
     <button className="practice-save" disabled={saving}>{saving ? "Saving…" : "Save growing practices"}</button>
   </form>;
