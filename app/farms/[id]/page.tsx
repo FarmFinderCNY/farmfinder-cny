@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { getActiveFarmStand } from "@/lib/supabase";
 import NotifyMeForm from "@/app/components/NotifyMeForm";
 import { getGrowingPracticeLabel } from "@/lib/growing-practices";
+import { FarmEngagementTracker } from "@/components/farm-engagement-tracker";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -28,11 +29,15 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
     (item) => item.status === "available" || item.status === "low"
   );
   const farmerUpdatedAt = stand.farmer_inventory_updated_at ? new Date(stand.farmer_inventory_updated_at).getTime() : null;
+  // Server-rendered freshness is intentionally evaluated at request time.
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
   const updatedWithinSevenDays = Boolean(
-    farmerUpdatedAt && Date.now() - farmerUpdatedAt >= 0 && Date.now() - farmerUpdatedAt < 7 * 24 * 60 * 60 * 1000
+    farmerUpdatedAt && now - farmerUpdatedAt >= 0 && now - farmerUpdatedAt < 7 * 24 * 60 * 60 * 1000
   );
 
   return <main>
+    <FarmEngagementTracker farmId={stand.id} />
     <nav className="nav shell"><Link className="brand" href="/"><span>FF</span> FarmFinder <b>CNY</b></Link><Link className="nav-link" href="/">← All farm stands</Link></nav>
     <article className="farm-detail shell">
       <div className="farm-detail-copy">
@@ -116,6 +121,7 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
   <a
     className="primary-button"
     href={directions}
+    data-farm-event="directions_click"
     target="_blank"
     rel="noreferrer"
   >
@@ -126,6 +132,7 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
     <a
       className="text-button"
       href={website}
+      data-farm-event="website_click"
       target="_blank"
       rel="noreferrer"
     >

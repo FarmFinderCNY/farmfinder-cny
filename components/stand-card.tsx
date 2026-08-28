@@ -12,8 +12,11 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
     (item) => item.status === "available" || item.status === "low"
   );
   const inventoryUpdatedAt = stand.farmer_inventory_updated_at ? new Date(stand.farmer_inventory_updated_at).getTime() : null;
+  // Server-rendered freshness is intentionally evaluated at request time.
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
   const updatedWithinSevenDays = Boolean(
-    inventoryUpdatedAt && Date.now() - inventoryUpdatedAt >= 0 && Date.now() - inventoryUpdatedAt < 7 * 24 * 60 * 60 * 1000
+    inventoryUpdatedAt && now - inventoryUpdatedAt >= 0 && now - inventoryUpdatedAt < 7 * 24 * 60 * 60 * 1000
   );
   const practiceBadge = getGrowingPracticeCardBadge(stand.growing_practices ?? [], stand.organic_certifier);
 

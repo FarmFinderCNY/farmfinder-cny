@@ -1,0 +1,10 @@
+.next/
+node_modules/
+upload/
+pnpm-workspace.yaml
+
+.env*
+!.env.example
+
+*.log
+.DS_Store

@@ -6,7 +6,6 @@ import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export default function ContactPage() {
-  const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState("");
 

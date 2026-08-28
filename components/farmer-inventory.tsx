@@ -25,6 +25,7 @@ export function FarmerInventory({
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [lastConfirmedAt, setLastConfirmedAt] = useState<string | null>(null);
 
   async function notifySubscribers(inventoryItemId: string) {
     try {
@@ -54,15 +55,18 @@ const loadInventory = useCallback(async () => {
   setError("");
 
   try {
-    const { data, error: inventoryError } =
-      await getBrowserSupabaseClient()
-        .from("farm_inventory")
-        .select(
-          "id,farm_id,name,price,quantity,status,sort_order,updated_at"
-        )
+    const supabase = getBrowserSupabaseClient();
+    const [{ data, error: inventoryError }, { data: farm }] = await Promise.all([
+      supabase.from("farm_inventory")
+        .select("id,farm_id,name,price,quantity,status,sort_order,updated_at")
         .eq("farm_id", farmId)
         .order("sort_order", { ascending: true })
-        .order("name", { ascending: true });
+        .order("name", { ascending: true }),
+      supabase.from("farm_stands")
+        .select("farmer_inventory_updated_at")
+        .eq("id", farmId)
+        .maybeSingle(),
+    ]);
 
     if (inventoryError) {
       setError(inventoryError.message);
@@ -70,6 +74,7 @@ const loadInventory = useCallback(async () => {
     }
 
     setItems((data ?? []) as InventoryItem[]);
+    setLastConfirmedAt(farm?.farmer_inventory_updated_at ?? null);
   } catch (err) {
     console.error("Unable to load farm inventory:", err);
     setError(
@@ -79,6 +84,24 @@ const loadInventory = useCallback(async () => {
     setLoading(false);
   }
 }, [farmId]);
+
+  async function confirmStillAccurate() {
+    setLoading(true);
+    setError("");
+    setMessage("");
+    const updatedAt = new Date().toISOString();
+    const { error: confirmationError } = await getBrowserSupabaseClient()
+      .from("farm_stands")
+      .update({ inventory_updated_at: updatedAt, farmer_inventory_updated_at: updatedAt })
+      .eq("id", farmId);
+
+    if (confirmationError) setError("FarmFinder could not confirm the listing. Please try again.");
+    else {
+      setLastConfirmedAt(updatedAt);
+      setMessage("Confirmed—customers will see this availability as current.");
+    }
+    setLoading(false);
+  }
 
   useEffect(() => {
     const timeout = window.setTimeout(() => void loadInventory(), 0);
@@ -251,6 +274,11 @@ const loadInventory = useCallback(async () => {
       {message && (
         <p className="form-success portal-message">{message}</p>
       )}
+
+      {items.length > 0 && <div className="inventory-confirmation">
+        <div><strong>Is everything below still accurate?</strong><span>{lastConfirmedAt ? `Last confirmed ${new Date(lastConfirmedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : "Not confirmed yet"}</span></div>
+        <button type="button" onClick={() => void confirmStillAccurate()} disabled={loading}>✓ Yes, everything is accurate</button>
+      </div>}
 
       <form onSubmit={addProduct} className="inventory-add-form">
 <label className="inventory-field">

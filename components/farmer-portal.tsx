@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
 import type { FarmStand } from "@/lib/types";
 import { FarmerGrowingPractices } from "@/components/farmer-growing-practices";
+import { FarmerGrowthTools } from "@/components/farmer-growth-tools";
 
 type Claim = { id: string; farm_id: string; status: string; created_at: string };
 
@@ -191,6 +192,7 @@ async function requestUpdate(event: FormEvent<HTMLFormElement>) {
             farmId={farm.id}
             farmName={farm.name}
           />
+          <FarmerGrowthTools farmId={farm.id} />
           {"growing_practices" in farm && <FarmerGrowingPractices
               farmId={farm.id}
               initialPractices={farm.growing_practices ?? []}

@@ -80,7 +80,7 @@ export async function POST(request: Request) {
   const itemName = normalizeProduct(item.name);
   const matches = ((subscriptions ?? []) as AlertSubscription[]).filter((subscription) => {
     const requestedProduct = normalizeProduct(subscription.product_name);
-    return requestedProduct && (itemName.includes(requestedProduct) || requestedProduct.includes(itemName));
+    return requestedProduct === "__farm_updates__" || (requestedProduct && (itemName.includes(requestedProduct) || requestedProduct.includes(itemName)));
   });
 
   let sent = 0;
@@ -92,8 +92,8 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         from: "FarmFinder CNY <notifications@send.farmfindercny.com>",
         to: [subscription.email],
-        subject: `${item.name} is available at ${farm.name}`,
-        html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#123f2d"><p style="font-weight:700;text-transform:uppercase;letter-spacing:.08em">FarmFinder CNY</p><h1>${escapeHtml(item.name)} is available</h1><h2>${escapeHtml(farm.name)}</h2>${details ? `<p>${details}</p>` : ""}<p><a href="https://www.farmfindercny.com/farms/${encodeURIComponent(farmId)}" style="display:inline-block;padding:12px 18px;background:#123f2d;color:white;text-decoration:none;border-radius:6px">View farm details</a></p><p style="color:#68756c;font-size:13px">This was a one-time alert and has now been completed.</p></div>`,
+        subject: subscription.product_name === "__farm_updates__" ? `${farm.name} posted a fresh availability update` : `${item.name} is available at ${farm.name}`,
+        html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#123f2d"><p style="font-weight:700;text-transform:uppercase;letter-spacing:.08em">FarmFinder CNY</p><h1>${subscription.product_name === "__farm_updates__" ? "Fresh availability posted" : `${escapeHtml(item.name)} is available`}</h1><h2>${escapeHtml(farm.name)}</h2>${details ? `<p>${details}</p>` : ""}<p><a href="https://www.farmfindercny.com/farms/${encodeURIComponent(farmId)}" style="display:inline-block;padding:12px 18px;background:#123f2d;color:white;text-decoration:none;border-radius:6px">View farm details</a></p><p style="color:#68756c;font-size:13px">This was a one-time alert and has now been completed.</p></div>`,
       }),
     });
     if (!emailResponse.ok) {

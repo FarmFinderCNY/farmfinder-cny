@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { getSupabaseClient } from "@/lib/supabase";
+import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
+import { recordFarmEvent } from "@/components/farm-engagement-tracker";
 export default function NotifyMeForm({ farmId }: { farmId: string }) {
   const [showForm, setShowForm] = useState(false);
+  const [alertType, setAlertType] = useState<"product" | "farm">("product");
   const [productName, setProductName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -15,13 +17,13 @@ export default function NotifyMeForm({ farmId }: { farmId: string }) {
     setSaving(true);
     setMessage("");
 
-    const supabase = getSupabaseClient();
+    const supabase = getBrowserSupabaseClient();
 
     const { error } = await supabase
       .from("inventory_alert_subscriptions")
       .insert({
         farm_id: farmId,
-        product_name: productName.trim(),
+        product_name: alertType === "farm" ? "__farm_updates__" : productName.trim(),
         email: email.trim().toLowerCase(),
         active: true,
       });
@@ -32,9 +34,8 @@ export default function NotifyMeForm({ farmId }: { farmId: string }) {
       return;
     }
 
-    setMessage(
-    "Your alert request has been saved."
-    );
+    setMessage(alertType === "farm" ? "We’ll email you about this farm’s next fresh availability update." : "Your product alert has been saved.");
+    recordFarmEvent(farmId, "alert_subscription");
     setProductName("");
     setEmail("");
     setSaving(false);
@@ -54,6 +55,12 @@ export default function NotifyMeForm({ farmId }: { farmId: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="notify-me-form">
+      <fieldset className="notify-choice">
+        <legend>What would you like to follow?</legend>
+        <label><input type="radio" name="alert_type" checked={alertType === "product"} onChange={() => setAlertType("product")} /> A specific product</label>
+        <label><input type="radio" name="alert_type" checked={alertType === "farm"} onChange={() => setAlertType("farm")} /> This farm’s next fresh update</label>
+      </fieldset>
+      {alertType === "product" && <>
       <label>
         Product
         <input
@@ -64,6 +71,7 @@ export default function NotifyMeForm({ farmId }: { farmId: string }) {
           required
         />
       </label>
+      </>}
 
       <label>
    
@@ -81,7 +89,7 @@ export default function NotifyMeForm({ farmId }: { farmId: string }) {
   <a href="/privacy">Privacy Policy</a>.
 </small>
       <button type="submit" className="primary-button" disabled={saving}>
-        {saving ? "Saving..." : "Create alert"}
+        {saving ? "Saving..." : alertType === "farm" ? "Notify me on next update" : "Create product alert"}
       </button>
 
       <button
