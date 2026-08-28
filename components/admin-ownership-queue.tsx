@@ -53,11 +53,25 @@ export function AdminOwnershipQueue() {
       : `${decision === "approve" ? "Approve" : "Reject"} this ${kind} request?`;
     if (!window.confirm(confirmation)) return;
     setWorking(id); setError(""); setMessage("");
-    const { error: rpcError } = await getBrowserSupabaseClient().rpc(`${decision}_${kind === "claim" ? "farm_claim" : "farm_update"}`, kind === "claim" ? { claim_id: id } : { request_id: id });
+    const supabase = getBrowserSupabaseClient();
+    const { error: rpcError } = await supabase.rpc(`${decision}_${kind === "claim" ? "farm_claim" : "farm_update"}`, kind === "claim" ? { claim_id: id } : { request_id: id });
     if (rpcError) setError(rpcError.message); else {
-      setMessage(decision === "approve" && kind === "claim"
-        ? "Ownership approved. The farmer can now sign in and update products immediately."
-        : `${kind === "claim" ? "Ownership" : "Listing update"} request ${decision === "approve" ? "approved" : "rejected"}.`);
+      if (decision === "approve" && kind === "claim") {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const emailResponse = await fetch("/api/ownership-approved", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionData.session?.access_token ?? ""}`,
+          },
+          body: JSON.stringify({ claimId: id }),
+        });
+        setMessage(emailResponse.ok
+          ? "Ownership approved. Welcome instructions were emailed to the farmer."
+          : "Ownership approved, but the welcome email could not be sent. The farmer can still sign in and manage the listing.");
+      } else {
+        setMessage(`${kind === "claim" ? "Ownership" : "Listing update"} request ${decision === "approve" ? "approved" : "rejected"}.`);
+      }
       await load();
     }
     setWorking("");
