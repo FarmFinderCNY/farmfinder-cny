@@ -56,13 +56,71 @@ const SEASONAL_BY_MONTH: Record<number, readonly string[]> = {
 
 const PRACTICE_SEARCH_TERMS: Record<string, string[]> = {
   certified_organic: ["organic", "certified organic", "usda organic"],
-  no_synthetic_pesticides: ["no pesticides", "pesticide free", "no synthetic pesticides", "chemical free"],
-  no_synthetic_herbicides: ["no herbicides", "herbicide free", "no synthetic herbicides"],
+  no_synthetic_pesticides: ["no pesticides", "pesticide free", "no synthetic pesticides", "chemical free", "spray free", "no spray"],
+  no_synthetic_herbicides: ["no herbicides", "herbicide free", "no synthetic herbicides", "weed killer free"],
   integrated_pest_management: ["integrated pest management", "ipm"],
   conventional: ["conventional", "conventional growing"],
   varies_by_product: ["varies by product", "varies by crop"],
   ask_the_farmer: ["ask the farmer", "growing practices"],
 };
+
+const SEARCH_SYNONYM_GROUPS = [
+  ["produce", "vegetable", "vegetables", "veggie", "veggies"],
+  ["sweet corn", "sweetcorn", "corn on the cob"],
+  ["farm stand", "farmstand", "roadside stand"],
+  ["pesticide free", "no pesticides", "no synthetic pesticides", "chemical free", "spray free", "no spray"],
+  ["herbicide free", "no herbicides", "no synthetic herbicides", "weed killer free"],
+  ["certified organic", "usda organic", "organic farm", "organic"],
+  ["integrated pest management", "ipm"],
+  ["baked goods", "baked", "bakery"],
+  ["egg", "eggs", "farm fresh eggs"],
+  ["maple", "maple syrup"],
+  ["beef", "cow", "cattle"],
+  ["pork", "pig"],
+] as const;
+
+function normalizeSearchText(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function expandedSearchTerms(query: string) {
+  const normalized = normalizeSearchText(query);
+  const group = SEARCH_SYNONYM_GROUPS.find((items) => items.some((item) => normalizeSearchText(item) === normalized));
+  return group ? Array.from(new Set(group.map(normalizeSearchText))) : [normalized];
+}
+
+function editDistanceAtMostOne(left: string, right: string) {
+  if (left === right) return true;
+  if (Math.abs(left.length - right.length) > 1) return false;
+  let edits = 0;
+  let leftIndex = 0;
+  let rightIndex = 0;
+  while (leftIndex < left.length && rightIndex < right.length) {
+    if (left[leftIndex] === right[rightIndex]) {
+      leftIndex += 1;
+      rightIndex += 1;
+      continue;
+    }
+    edits += 1;
+    if (edits > 1) return false;
+    if (left.length > right.length) leftIndex += 1;
+    else if (right.length > left.length) rightIndex += 1;
+    else {
+      leftIndex += 1;
+      rightIndex += 1;
+    }
+  }
+  return edits + Number(leftIndex < left.length || rightIndex < right.length) <= 1;
+}
+
+function matchesWithLightTypoTolerance(query: string, searchable: string) {
+  const queryWords = normalizeSearchText(query).split(" ").filter(Boolean);
+  const searchableWords = new Set(normalizeSearchText(searchable).split(" ").filter(Boolean));
+  return queryWords.length > 0 && queryWords.every((queryWord) =>
+    searchableWords.has(queryWord) ||
+    (queryWord.length >= 5 && Array.from(searchableWords).some((word) => editDistanceAtMostOne(queryWord, word))),
+  );
+}
 
 function distanceInMiles(from: UserLocation, stand: FarmStand) {
   if (stand.latitude === null || stand.longitude === null) return null;
@@ -118,16 +176,20 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
   const seasonalProduce = useMemo(() => SEASONAL_BY_MONTH[new Date().getMonth()] ?? [], []);
 
   const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query = normalizeSearchText(search);
+    const queryTerms = expandedSearchTerms(query);
 
     return stands
       .map((stand, index) => {
         const inventory = stand.inventory ?? [];
         const matchingProducts = query
-          ? inventory.filter((product) => product.name.toLowerCase().includes(query))
+          ? inventory.filter((product) => {
+              const productName = normalizeSearchText(product.name);
+              return queryTerms.some((term) => productName.includes(term)) || matchesWithLightTypoTolerance(query, productName);
+            })
           : inventory;
 
-        const searchable = [
+        const searchable = normalizeSearchText([
           stand.name,
           stand.city,
           stand.address,
@@ -139,12 +201,12 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
           ]),
           stand.growing_practices_note,
           stand.organic_certifier,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
+        ].filter(Boolean).join(" "));
 
-        const matchesSearch = !query || searchable.includes(query) || matchingProducts.length > 0;
+        const matchesSearch = !query ||
+          queryTerms.some((term) => searchable.includes(term)) ||
+          matchesWithLightTypoTolerance(query, searchable) ||
+          matchingProducts.length > 0;
 
         let matchesCategory = category === "All";
 
