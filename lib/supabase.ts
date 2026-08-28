@@ -22,8 +22,8 @@ export async function getActiveFarmStands(): Promise<FarmStand[]> {
   if (!hasSupabaseConfig()) return [];
 
   const client = getSupabaseClient();
-  const selectWithFarmerUpdate = "id,name,address,city,state,zip_code,latitude,longitude,description,phone,website,hours,payment_methods,product_categories,photo_url,is_verified,verified_at,is_active,created_at,inventory_updated_at,farmer_inventory_updated_at,inventory:farm_inventory(id,farm_id,name,price,quantity,status,sort_order,updated_at)";
-  const legacySelect = "id,name,address,city,state,zip_code,latitude,longitude,description,phone,website,hours,payment_methods,product_categories,photo_url,is_verified,verified_at,is_active,created_at,inventory_updated_at,inventory:farm_inventory(id,farm_id,name,price,quantity,status,sort_order,updated_at)";
+  const selectWithFarmerUpdate = "id,owner_user_id,name,address,city,state,zip_code,latitude,longitude,description,phone,website,hours,payment_methods,product_categories,photo_url,is_verified,verified_at,is_active,created_at,inventory_updated_at,farmer_inventory_updated_at,inventory:farm_inventory(id,farm_id,name,price,quantity,status,sort_order,updated_at)";
+  const legacySelect = "id,owner_user_id,name,address,city,state,zip_code,latitude,longitude,description,phone,website,hours,payment_methods,product_categories,photo_url,is_verified,verified_at,is_active,created_at,inventory_updated_at,inventory:farm_inventory(id,farm_id,name,price,quantity,status,sort_order,updated_at)";
   const primaryResult = await client
     .from("farm_stands")
     .select(selectWithFarmerUpdate)

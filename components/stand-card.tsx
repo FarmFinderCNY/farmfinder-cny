@@ -22,7 +22,10 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
       {stand.photo_url && <img className="stand-photo" src={stand.photo_url} alt={`${stand.name} farm`} />}
       <div className="card-topline">
         <span className="status"><i /> Active listing</span>
-        {stand.is_verified && <span className="verified">✓ Verified</span>}
+        <div className="verification-badges">
+          {stand.is_verified && <span className="verified">✓ Listing verified</span>}
+          {stand.owner_user_id && <span className="owner-managed">🌾 Owner managed</span>}
+        </div>
       </div>
       <h3>{stand.name}</h3>
       <p className="location">{[stand.city, stand.state].filter(Boolean).join(", ") || location || "Central New York"}{distanceMiles !== null && <strong className="distance"> · {distanceMiles < 10 ? distanceMiles.toFixed(1) : Math.round(distanceMiles)} miles away</strong>}</p>

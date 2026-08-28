@@ -36,7 +36,13 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
     <nav className="nav shell"><Link className="brand" href="/"><span>FF</span> FarmFinder <b>CNY</b></Link><Link className="nav-link" href="/">← All farm stands</Link></nav>
     <article className="farm-detail shell">
       <div className="farm-detail-copy">
-        <div className="card-topline"><span className="status"><i /> Active listing</span>{stand.is_verified && <span className="verified">✓ Verified</span>}</div>
+        <div className="card-topline">
+          <span className="status"><i /> Active listing</span>
+          <div className="verification-badges">
+            {stand.is_verified && <span className="verified">✓ Listing verified</span>}
+            {stand.owner_user_id && <span className="owner-managed">🌾 Owner managed</span>}
+          </div>
+        </div>
         <h1>{stand.name}</h1><p className="farm-address">{address}</p>
         {stand.description && <p className="farm-description">{stand.description}</p>}
         {(stand.growing_practices?.length ?? 0) > 0 && <section className="growing-practices" aria-labelledby="growing-practices-heading">
