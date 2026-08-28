@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { MapPlaceholder } from "@/components/map-placeholder";
 import { StandCard } from "@/components/stand-card";
 import type { FarmStand } from "@/lib/types";
+import { GROWING_PRACTICE_OPTIONS, getGrowingPracticeLabel } from "@/lib/growing-practices";
 
 type UserLocation = { latitude: number; longitude: number };
 
@@ -53,6 +54,16 @@ const SEASONAL_BY_MONTH: Record<number, readonly string[]> = {
   11: ["Potatoes", "Onions", "Garlic", "Cabbage", "Carrots", "Beets", "Turnips"],
 };
 
+const PRACTICE_SEARCH_TERMS: Record<string, string[]> = {
+  certified_organic: ["organic", "certified organic", "usda organic"],
+  no_synthetic_pesticides: ["no pesticides", "pesticide free", "no synthetic pesticides", "chemical free"],
+  no_synthetic_herbicides: ["no herbicides", "herbicide free", "no synthetic herbicides"],
+  integrated_pest_management: ["integrated pest management", "ipm"],
+  conventional: ["conventional", "conventional growing"],
+  varies_by_product: ["varies by product", "varies by crop"],
+  ask_the_farmer: ["ask the farmer", "growing practices"],
+};
+
 function distanceInMiles(from: UserLocation, stand: FarmStand) {
   if (stand.latitude === null || stand.longitude === null) return null;
   const toRadians = (value: number) => value * Math.PI / 180;
@@ -90,6 +101,7 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [selectedVegetables, setSelectedVegetables] = useState<string[]>([]);
+  const [selectedPractices, setSelectedPractices] = useState<string[]>([]);
   const [visibleCount, setVisibleCount] = useState(pageSize);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [locationState, setLocationState] = useState<"idle" | "loading" | "ready" | "error">("idle");
@@ -121,6 +133,12 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
           stand.address,
           stand.description,
           ...stand.product_categories,
+          ...(stand.growing_practices ?? []).flatMap((practice) => [
+            getGrowingPracticeLabel(practice),
+            ...(PRACTICE_SEARCH_TERMS[practice] ?? []),
+          ]),
+          stand.growing_practices_note,
+          stand.organic_certifier,
         ]
           .filter(Boolean)
           .join(" ")
@@ -144,6 +162,11 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
           matchesCategory = inventory.some((product) =>
             seasonalProduce.some((vegetable) => productMatches(product.name, vegetable)),
           );
+        } else if (category === "Growing practices") {
+          const practices = stand.growing_practices ?? [];
+          matchesCategory = selectedPractices.length === 0
+            ? practices.length > 0
+            : selectedPractices.some((practice) => practices.includes(practice));
         } else if (category !== "All") {
           matchesCategory = stand.product_categories.includes(category);
         }
@@ -180,7 +203,7 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
         return a.index - b.index;
       })
       .map(({ stand }) => stand);
-  }, [stands, search, category, selectedVegetables, seasonalProduce, userLocation]);
+  }, [stands, search, category, selectedVegetables, selectedPractices, seasonalProduce, userLocation]);
 
   const visible = filtered.slice(0, visibleCount);
   const remaining = Math.max(filtered.length - visible.length, 0);
@@ -193,6 +216,14 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
   function updateCategory(value: string) {
     setCategory(value);
     if (value !== "Produce") setSelectedVegetables([]);
+    if (value !== "Growing practices") setSelectedPractices([]);
+    setVisibleCount(pageSize);
+  }
+
+  function togglePractice(practice: string) {
+    setSelectedPractices((current) => current.includes(practice)
+      ? current.filter((item) => item !== practice)
+      : [...current, practice]);
     setVisibleCount(pageSize);
   }
 
@@ -226,7 +257,7 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
     <div className="directory-tools">
       <label>
         <span>What are you looking for?</span>
-        <input type="search" value={search} onChange={(event) => updateSearch(event.target.value)} placeholder="Try sweet corn, eggs, or Utica…" />
+        <input type="search" value={search} onChange={(event) => updateSearch(event.target.value)} placeholder="Try sweet corn, no pesticides, or Utica…" />
       </label>
 
       <div className="location-tools">
@@ -237,9 +268,9 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
       </div>
 
       <div className="filter-row" aria-label="Filter by product category">
-        {["All", "Seasonal", "Produce", ...standardCategories].map((item) => (
+        {["All", "Seasonal", "Produce", "Growing practices", ...standardCategories].map((item) => (
           <button key={item} type="button" className={category === item ? "active" : ""} aria-pressed={category === item} onClick={() => updateCategory(item)}>
-            {item === "Seasonal" ? "🌱 Seasonal" : item === "Produce" ? "🥕 Produce" : item}
+            {item === "Seasonal" ? "🌱 Seasonal" : item === "Produce" ? "🥕 Produce" : item === "Growing practices" ? "🌿 Growing practices" : item}
           </button>
         ))}
       </div>
@@ -263,6 +294,27 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
               </label>
             ))}
           </div>
+        </div>
+      )}
+
+      {category === "Growing practices" && (
+        <div className="produce-picker practice-picker">
+          <div className="produce-picker-heading">
+            <div>
+              <strong>Choose growing practices</strong>
+              <p>These practices are reported by each farm. Select as many as you want.</p>
+            </div>
+            {selectedPractices.length > 0 && <button type="button" className="produce-clear" onClick={() => setSelectedPractices([])}>Clear</button>}
+          </div>
+          <div className="produce-options practice-filter-options">
+            {GROWING_PRACTICE_OPTIONS.map((option) => (
+              <label key={option.value} className={selectedPractices.includes(option.value) ? "selected" : ""}>
+                <input type="checkbox" checked={selectedPractices.includes(option.value)} onChange={() => togglePractice(option.value)} />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+          <p className="practice-filter-note">Farm-reported information may vary by crop. Open a farm’s details for its explanation.</p>
         </div>
       )}
 
