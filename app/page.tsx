@@ -2,7 +2,8 @@ import { StandDirectory } from "@/components/stand-directory";
 import { getActiveFarmStands, hasSupabaseConfig } from "@/lib/supabase";
 import Link from "next/link";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function Home() {
   const configured = hasSupabaseConfig();

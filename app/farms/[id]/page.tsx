@@ -5,7 +5,8 @@ import { notFound } from "next/navigation";
 import { getActiveFarmStand } from "@/lib/supabase";
 import NotifyMeForm from "@/app/components/NotifyMeForm";
 import { getGrowingPracticeLabel } from "@/lib/growing-practices";
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
