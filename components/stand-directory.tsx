@@ -68,7 +68,7 @@ const SEARCH_SYNONYM_GROUPS = [
   ["produce", "vegetable", "vegetables", "veggie", "veggies"],
   ["sweet corn", "sweetcorn", "corn on the cob"],
   ["farm stand", "farmstand", "roadside stand"],
-  ["pesticide free", "no pesticides", "no synthetic pesticides", "chemical free", "spray free", "no spray"],
+  ["pesticide free", "pesticides free", "no pesticides", "without pesticides", "grown without pesticides", "no synthetic pesticides", "chemical free", "spray free", "no spray", "unsprayed"],
   ["herbicide free", "no herbicides", "no synthetic herbicides", "weed killer free"],
   ["certified organic", "usda organic", "organic farm", "organic"],
   ["integrated pest management", "ipm"],
@@ -85,6 +85,15 @@ function normalizeSearchText(value: string) {
 
 function expandedSearchTerms(query: string) {
   const normalized = normalizeSearchText(query);
+  const words = normalized.split(" ").filter(Boolean);
+  const pesticideGroup = SEARCH_SYNONYM_GROUPS[3];
+  const hasPesticideLikeWord = words.some((word) => word.length >= 6 && word.startsWith("pest"));
+  const meansWithout = words.some((word) => ["no", "free", "without", "unsprayed"].includes(word));
+
+  if (hasPesticideLikeWord && meansWithout) {
+    return Array.from(new Set(pesticideGroup.map(normalizeSearchText)));
+  }
+
   const group = SEARCH_SYNONYM_GROUPS.find((items) => items.some((item) => normalizeSearchText(item) === normalized));
   return group ? Array.from(new Set(group.map(normalizeSearchText))) : [normalized];
 }
