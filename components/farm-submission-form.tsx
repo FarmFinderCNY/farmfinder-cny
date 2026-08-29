@@ -98,7 +98,7 @@ export function FarmSubmissionForm({ defaultSubmissionType = "owner" }: { defaul
           <label>ZIP code<input name="zip_code" required inputMode="numeric" pattern="[0-9]{5}(-[0-9]{4})?" /></label>
           <label>Public phone<input name="public_phone" type="tel" maxLength={30} /></label>
           <label className="form-wide">Website or social page<input name="website" type="url" placeholder="https://" maxLength={250} /></label>
-          {submissionType === "community" && <label className="form-wide">Where did you verify this information?<input name="source_url" type="url" required placeholder="Official website, social page, or public listing URL" maxLength={500} /></label>}
+          {submissionType === "community" && <label className="form-wide">Where did you verify this information?<input name="source_url" type="text" required placeholder="Paste a link, or describe the source (Facebook page, Google listing, personal visit, etc.)" maxLength={500} /><small>Links and plain-language sources are both accepted.</small></label>}
           <label className="form-wide">What do you offer?<textarea name="description" rows={5} maxLength={1000} placeholder="Tell visitors about your produce, products, and farm stand." /></label>
           <label>Hours<textarea name="hours" rows={3} maxLength={300} placeholder="Example: Mon–Sat, 9 AM–6 PM" /></label>
           <label>Payment methods<textarea name="payment_methods" rows={3} maxLength={200} placeholder="Cash, cards, honor system…" /></label>
