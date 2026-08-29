@@ -1,3 +1,4 @@
+import { PwaRegister } from "@/components/pwa-register";
 import { StandDirectory } from "@/components/stand-directory";
 import { getActiveFarmStands, hasSupabaseConfig } from "@/lib/supabase";
 import Link from "next/link";
@@ -14,6 +15,7 @@ export default async function Home() {
       <nav className="nav shell" aria-label="Main navigation">
         <a className="brand" href="#top"><span>FF</span> FarmFinder <b>CNY</b></a>
         <div className="nav-actions">
+          <PwaRegister />
           <a className="nav-link" href="#stands">Browse stands</a>
           <Link className="nav-link nav-submit" href="/list-your-farm">List your farm</Link>
         </div>
