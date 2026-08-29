@@ -219,6 +219,11 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
             })
           : inventory;
 
+        const listedProductText = normalizeSearchText([
+          stand.description,
+          ...stand.product_categories,
+        ].filter(Boolean).join(" "));
+
         const searchable = normalizeSearchText([
           stand.name,
           stand.city,
@@ -246,8 +251,9 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
               stand.product_categories.some((item) => item.toLowerCase() === "produce") ||
               inventory.some((product) => VEGETABLES.some((vegetable) => productMatches(product.name, vegetable)));
           } else {
-            matchesCategory = inventory.some((product) =>
-              selectedVegetables.some((vegetable) => productMatches(product.name, vegetable)),
+            matchesCategory = selectedVegetables.some((vegetable) =>
+              inventory.some((product) => productMatches(product.name, vegetable)) ||
+              productMatches(listedProductText, vegetable),
             );
           }
         } else if (category === "Seasonal") {
