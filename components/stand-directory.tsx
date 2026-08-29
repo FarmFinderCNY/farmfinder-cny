@@ -273,7 +273,7 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
 
     const scrollTimer = window.setTimeout(() => {
       resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 650);
+    }, 1500);
 
     return () => window.clearTimeout(scrollTimer);
   }, [search]);
