@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { MapPlaceholder } from "@/components/map-placeholder";
 import { StandCard } from "@/components/stand-card";
 import type { FarmStand } from "@/lib/types";
@@ -268,16 +268,6 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
       .map(({ stand }) => stand);
   }, [stands, search, category, selectedVegetables, selectedPractices, seasonalProduce, userLocation]);
 
-  useEffect(() => {
-    if (search.trim().length < 2) return;
-
-    const scrollTimer = window.setTimeout(() => {
-      resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 1500);
-
-    return () => window.clearTimeout(scrollTimer);
-  }, [search]);
-
   const visible = filtered.slice(0, visibleCount);
   const remaining = Math.max(filtered.length - visible.length, 0);
 
@@ -328,10 +318,16 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
 
   return <>
     <div className="directory-tools">
-      <label>
-        <span>What are you looking for?</span>
-        <input type="search" value={search} onChange={(event) => updateSearch(event.target.value)} placeholder="Try sweet corn, no pesticides, or Utica…" />
-      </label>
+      <form className="guest-search-form" onSubmit={(event) => {
+        event.preventDefault();
+        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }}>
+        <label>
+          <span>What are you looking for?</span>
+          <input type="search" value={search} onChange={(event) => updateSearch(event.target.value)} placeholder="Try sweet corn, no pesticides, or Utica…" />
+        </label>
+        <button className="guest-search-button" type="submit">Search farms</button>
+      </form>
 
       <div className="location-tools">
         <button type="button" className={locationState === "ready" ? "location-button active" : "location-button"} onClick={useMyLocation} disabled={locationState === "loading"}>
