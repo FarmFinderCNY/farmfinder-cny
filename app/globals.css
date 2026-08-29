@@ -600,3 +600,41 @@ h1 em { color:var(--orange); font-weight:450; }
 @media (max-width:620px) { .install-app-banner { left:12px; right:12px; bottom:12px; grid-template-columns:1fr auto; width:auto; }.install-app-banner>button:not(.install-dismiss),.install-app-banner p { grid-column:1 / -1; }.install-app-banner .install-dismiss { grid-column:2; grid-row:1; } }
 /* Farm and product follow controls */
 .notify-choice { display:grid; gap:8px; margin:0 0 12px; padding:12px; border:1px solid var(--line); border-radius:10px; }.notify-choice legend { padding:0 5px; color:var(--forest); font-size:12px; font-weight:850; }.notify-choice label { display:flex; align-items:center; gap:8px; font-size:13px; }.notify-choice input { width:auto; accent-color:var(--green); }
+
+
+/* Keep NY Alive local-buying campaign */
+.keep-ny-callout {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: min(560px, 100%);
+  margin: 22px 0 4px;
+  padding: 13px 16px;
+  border-left: 4px solid var(--orange);
+  border-radius: 0 9px 9px 0;
+  color: var(--cream);
+  background: rgba(12, 35, 25, 0.72);
+  backdrop-filter: blur(4px);
+}
+.keep-ny-callout > span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: white;
+  background: var(--orange);
+  font-size: 15px;
+}
+.keep-ny-callout strong {
+  display: block;
+  color: white;
+  font: 700 20px var(--font-display);
+  letter-spacing: -.02em;
+}
+.keep-ny-callout p {
+  margin: 2px 0 0;
+  color: #e5eee7;
+  font-size: 13px;
+  line-height: 1.4;
+}

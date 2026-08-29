@@ -83,6 +83,14 @@ export default async function Home() {
             available, and connect directly with the people growing your food.
           </p>
 
+          <div className="keep-ny-callout">
+            <span aria-hidden="true">♥</span>
+            <div>
+              <strong>Keep NY Alive</strong>
+              <p>Every local purchase helps keep New York farms, stands, and communities alive.</p>
+            </div>
+          </div>
+
           <div className="hero-actions">
             <a className="primary-button" href="#stands">
               Find fresh food <span>↓</span>
@@ -108,11 +116,11 @@ export default async function Home() {
       </header>
 
       <div className="marquee" aria-hidden="true">
-        <span>FARM FRESH</span>
+        <span>KEEP NY ALIVE</span>
         <i>✦</i>
-        <span>LIVE AVAILABILITY</span>
+        <span>BUY LOCAL</span>
         <i>✦</i>
-        <span>COMMUNITY ROOTED</span>
+        <span>SUPPORT LOCAL FARMS</span>
         <i>✦</i>
         <span>CNY PROUD</span>
       </div>
@@ -154,7 +162,7 @@ export default async function Home() {
         </a>
 
         <p>
-          Helping Central New York find food grown closer to home.{" "}
+          Buy local. Support local farms. Help keep New York alive.{" "}
           <Link href="/contact">Contact Ronald</Link>
           {" · "}
           <Link href="/privacy">Privacy Policy</Link>
