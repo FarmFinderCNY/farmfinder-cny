@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MapPlaceholder } from "@/components/map-placeholder";
 import { StandCard } from "@/components/stand-card";
 import type { FarmStand } from "@/lib/types";
@@ -163,6 +163,7 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
   const [visibleCount, setVisibleCount] = useState(pageSize);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [locationState, setLocationState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   const categories = useMemo(
     () => Array.from(new Set(stands.flatMap((stand) => stand.product_categories))).sort(),
@@ -266,6 +267,16 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
       })
       .map(({ stand }) => stand);
   }, [stands, search, category, selectedVegetables, selectedPractices, seasonalProduce, userLocation]);
+
+  useEffect(() => {
+    if (search.trim().length < 2) return;
+
+    const scrollTimer = window.setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 650);
+
+    return () => window.clearTimeout(scrollTimer);
+  }, [search]);
 
   const visible = filtered.slice(0, visibleCount);
   const remaining = Math.max(filtered.length - visible.length, 0);
@@ -395,6 +406,7 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
       <p><b>Available today</b> appears for seven days after a farmer updates their products. After that, <b>Usually offers</b> shows their general selection until they update again. Farms that have not posted their first update do not show availability wording.</p>
     </aside>
 
+    <div ref={resultsRef} className="search-results-anchor">
     {filtered.length > 0 ? <>
       <div className="results-heading" aria-live="polite">
         <div><p className="eyebrow">Matching stands</p><h3>{filtered.length} {filtered.length === 1 ? "farm found" : "farms found"}</h3></div>
@@ -403,5 +415,6 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
       <div className="stand-grid">{visible.map((stand) => <StandCard key={stand.id} stand={stand} distanceMiles={userLocation ? distanceInMiles(userLocation, stand) : null} />)}</div>
       {remaining > 0 && <div className="show-more-row"><button type="button" className="show-more-button" onClick={() => setVisibleCount((count) => count + pageSize)}>Show {Math.min(pageSize, remaining)} more <span>↓</span></button><p>{remaining} remaining</p></div>}
     </> : <div className="empty-state"><span>🌾</span><h3>No matching farm stands yet.</h3><p>Try another town, product, or category.</p></div>}
+    </div>
   </>;
 }
