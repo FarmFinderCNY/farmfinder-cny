@@ -54,6 +54,23 @@ const SEASONAL_BY_MONTH: Record<number, readonly string[]> = {
   11: ["Potatoes", "Onions", "Garlic", "Cabbage", "Carrots", "Beets", "Turnips"],
 };
 
+/* Typical Central New York harvest windows used when a verified farm has
+   seasonal categories but has not entered item-by-item inventory yet. */
+const CNY_SEASONAL_CATEGORIES_BY_MONTH: Record<number, readonly string[]> = {
+  0: ["Produce"],
+  1: ["Produce"],
+  2: ["Produce"],
+  3: ["Produce", "Plants"],
+  4: ["Produce", "Plants"],
+  5: ["Produce", "Berries", "Fruit"],
+  6: ["Produce", "Berries", "Fruit"],
+  7: ["Produce", "Berries", "Fruit", "Apples"],
+  8: ["Produce", "Berries", "Fruit", "Apples", "Pumpkins"],
+  9: ["Produce", "Fruit", "Apples", "Pumpkins"],
+  10: ["Produce", "Fruit", "Apples", "Pumpkins"],
+  11: ["Produce"],
+};
+
 const PRACTICE_SEARCH_TERMS: Record<string, string[]> = {
   certified_organic: ["organic", "certified organic", "usda organic"],
   no_synthetic_pesticides: ["no pesticides", "pesticide free", "no synthetic pesticides", "chemical free", "spray free", "no spray"],
@@ -183,7 +200,9 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
     (item) => item.toLowerCase() !== "produce" && item.toLowerCase() !== "seasonal",
   );
 
-  const seasonalProduce = useMemo(() => SEASONAL_BY_MONTH[new Date().getMonth()] ?? [], []);
+  const currentMonth = useMemo(() => new Date().getMonth(), []);
+  const seasonalProduce = useMemo(() => SEASONAL_BY_MONTH[currentMonth] ?? [], [currentMonth]);
+  const seasonalCategories = useMemo(() => CNY_SEASONAL_CATEGORIES_BY_MONTH[currentMonth] ?? [], [currentMonth]);
 
   const filtered = useMemo(() => {
     const query = normalizeSearchText(search);
@@ -231,9 +250,13 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
             );
           }
         } else if (category === "Seasonal") {
-          matchesCategory = inventory.some((product) =>
+          const hasCurrentSeasonInventory = inventory.some((product) =>
             seasonalProduce.some((vegetable) => productMatches(product.name, vegetable)),
           );
+          const isVerifiedSeasonalFarm = stand.is_verified && stand.product_categories.some((item) =>
+            seasonalCategories.some((seasonalCategory) => seasonalCategory.toLowerCase() === item.toLowerCase()),
+          );
+          matchesCategory = hasCurrentSeasonInventory || isVerifiedSeasonalFarm;
         } else if (category === "Growing practices") {
           const practices = stand.growing_practices ?? [];
           matchesCategory = selectedPractices.length === 0
@@ -275,7 +298,7 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
         return a.index - b.index;
       })
       .map(({ stand }) => stand);
-  }, [stands, search, category, selectedVegetables, selectedPractices, seasonalProduce, userLocation]);
+  }, [stands, search, category, selectedVegetables, selectedPractices, seasonalProduce, seasonalCategories, userLocation]);
 
   const visible = filtered.slice(0, visibleCount);
   const remaining = Math.max(filtered.length - visible.length, 0);
@@ -398,8 +421,9 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
 
       {category === "Seasonal" && (
         <div className="seasonal-note" role="status">
-          <strong>🌱 In season now</strong>
+          <strong>🌱 In season now in Central New York</strong>
           <p>{seasonalProduce.join(", ")}</p>
+          <p>Based on typical CNY harvest dates. Verified seasonal farms may appear before owners post today&apos;s exact inventory.</p>
         </div>
       )}
     </div>
