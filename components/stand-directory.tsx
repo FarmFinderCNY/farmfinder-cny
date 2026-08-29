@@ -189,6 +189,7 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
   const [visibleCount, setVisibleCount] = useState(pageSize);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [locationState, setLocationState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [locationAttempts, setLocationAttempts] = useState(0);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const categories = useMemo(
@@ -332,6 +333,9 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
   }
 
   function useMyLocation() {
+    if (locationAttempts >= 2 || locationState === "loading") return;
+
+    setLocationAttempts((attempts) => attempts + 1);
     if (!("geolocation" in navigator)) {
       setLocationState("error");
       return;
@@ -362,10 +366,29 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
       </form>
 
       <div className="location-tools">
-        <button type="button" className={locationState === "ready" ? "location-button active" : "location-button"} onClick={useMyLocation} disabled={locationState === "loading"}>
-          {locationState === "loading" ? "Finding your location…" : locationState === "ready" ? "✓ Nearest farms first" : "⌖ Use my location"}
+        <button
+          type="button"
+          className={locationState === "ready" ? "location-button active" : "location-button"}
+          onClick={useMyLocation}
+          disabled={locationState === "loading" || (locationState === "error" && locationAttempts >= 2)}
+        >
+          {locationState === "loading"
+            ? "Finding your location…"
+            : locationState === "ready"
+              ? "✓ Nearest farms first"
+              : locationState === "error" && locationAttempts >= 2
+                ? "Location unavailable"
+                : locationState === "error"
+                  ? "⌖ Try location again"
+                  : "⌖ Use my location"}
         </button>
-        {locationState === "error" && <p role="status">We couldn’t access your location. You can still search by town.</p>}
+        {locationState === "error" && (
+          <p role="status">
+            {locationAttempts >= 2
+              ? "Location couldn’t be enabled after two tries. Search by town instead."
+              : "Location wasn’t enabled. You can try once more or search by town."}
+          </p>
+        )}
       </div>
 
       <div className="filter-row" aria-label="Filter by product category">
