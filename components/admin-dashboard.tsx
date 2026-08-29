@@ -127,9 +127,28 @@ const [coordinates, setCoordinates] = useState<Record<string, { latitude: string
     setError("");
     const functionName = decision === "approve" ? "approve_farm_submission" : "reject_farm_submission";
     const rpcArguments = decision === "approve" ? { submission_id: id, farm_latitude: latitude, farm_longitude: longitude } : { submission_id: id };
-    const { error: reviewError } = await getBrowserSupabaseClient().rpc(functionName, rpcArguments);
-    if (reviewError) setError(reviewError.message);
-    else await loadSubmissions();
+    const supabase = getBrowserSupabaseClient();
+    const { error: reviewError } = await supabase.rpc(functionName, rpcArguments);
+    if (reviewError) {
+      setError(reviewError.message);
+    } else if (decision === "approve") {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const response = await fetch("/api/owner-submission-approved", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionData.session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({ submissionId: id, latitude, longitude }),
+      });
+      const result = await response.json() as { error?: string };
+      if (!response.ok) {
+        setError(result.error ?? "The farm was published, but owner access could not be connected automatically.");
+      }
+      await loadSubmissions();
+    } else {
+      await loadSubmissions();
+    }
     setWorkingId(null);
   }
 
@@ -164,7 +183,7 @@ const [coordinates, setCoordinates] = useState<Record<string, { latitude: string
       <div className="private-contact"><strong>Private {submission.submission_type === "community" ? "contributor" : "owner"} contact</strong><span>{submission.contact_name}</span><a href={`mailto:${submission.contact_email}`}>{submission.contact_email}</a>{submission.contact_phone && <a href={`tel:${submission.contact_phone}`}>{submission.contact_phone}</a>}</div>
       <div className="coordinate-entry"><strong>Map location required before approval</strong><p>Find the farm on Google Maps, then enter its latitude and longitude.</p><div><label>Latitude<input type="number" step="any" min="-90" max="90" placeholder="43.123456" value={coordinates[submission.id]?.latitude ?? ""} onChange={(event) => setCoordinates((current) => ({ ...current, [submission.id]: { latitude: event.target.value, longitude: current[submission.id]?.longitude ?? "" } }))} /></label><label>Longitude<input type="number" step="any" min="-180" max="180" placeholder="-75.123456" value={coordinates[submission.id]?.longitude ?? ""} onChange={(event) => setCoordinates((current) => ({ ...current, [submission.id]: { latitude: current[submission.id]?.latitude ?? "", longitude: event.target.value } }))} /></label></div></div>
       <p className="review-note">Verify the public details, coordinates, and source before approval. An authorized photo can be added later.</p>
-      <div className="review-actions"><button className="reject-button" disabled={workingId === submission.id} onClick={() => void review(submission.id, "reject", submission.farm_name)}>Reject</button><button className="approve-button" disabled={workingId === submission.id || !coordinates[submission.id]?.latitude || !coordinates[submission.id]?.longitude} onClick={() => void review(submission.id, "approve", submission.farm_name)}>{workingId === submission.id ? "Working…" : "Approve & publish"}</button></div>
+      <div className="review-actions"><button className="reject-button" disabled={workingId === submission.id} onClick={() => void review(submission.id, "reject", submission.farm_name)}>Reject</button><button className="approve-button" disabled={workingId === submission.id || !coordinates[submission.id]?.latitude || !coordinates[submission.id]?.longitude} onClick={() => void review(submission.id, "approve", submission.farm_name)}>{workingId === submission.id ? "Working…" : submission.submission_type === "owner" ? "Approve, publish & connect owner" : "Approve & publish"}</button></div>
     </article>)}</div>}
   </section>;
 }
