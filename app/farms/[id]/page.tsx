@@ -140,7 +140,7 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
     </a>
   )}
 
-  {!stand.owner_user_id && (
+  {!stand.owner_user_id && !stand.is_verified && (
     <Link
       className="text-button"
       href={`/farms/${stand.id}/claim`}
