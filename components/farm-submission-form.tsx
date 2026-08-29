@@ -65,7 +65,7 @@ export function FarmSubmissionForm({ defaultSubmissionType = "owner" }: { defaul
         <span>✓</span>
         <p className="eyebrow">Submission received</p>
         <h2>Thanks for helping CNY find local food.</h2>
-        <p>We’ll review your farm information before it appears publicly. We may contact you if anything needs clarification.</p>
+        <p>{submissionType === "owner" ? "We’ll review your ownership and farm information. Once approved, your email will be connected to the listing so you can sign in and update it—no second ownership claim is needed." : "We’ll review the farm information before it appears publicly. We may contact you if anything needs clarification."}</p>
         <Link href="/">Return to FarmFinder CNY</Link>
       </div>
     );
