@@ -14,18 +14,21 @@ export default async function ClaimFarmPage({
 
   if (!stand) notFound();
 
-  if (stand.owner_user_id) {
+  if (stand.owner_user_id || stand.is_verified) {
     return (
       <main className="shell">
         <section style={{ padding: "60px 0" }}>
           <p className="eyebrow">Farm ownership</p>
           <h1>{stand.name}</h1>
 
-          <p>This farm has already been claimed by its owner.</p>
+          <p>{stand.owner_user_id
+            ? "This farm is already connected to its owner’s account."
+            : "Ownership of this farm has already been verified. The approved owner can sign in to the Farmer Portal using the same email address provided to FarmFinder CNY."}</p>
 
-          <Link className="primary-button" href={`/farms/${stand.id}`}>
-            Back to farm
-          </Link>
+          <div className="detail-actions">
+            {!stand.owner_user_id && <Link className="primary-button" href="/farmer">Farmer Portal</Link>}
+            <Link className={stand.owner_user_id ? "primary-button" : "text-button"} href={`/farms/${stand.id}`}>Back to farm</Link>
+          </div>
         </section>
       </main>
     );
