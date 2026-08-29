@@ -105,7 +105,7 @@ export async function POST(request: Request) {
     payment_methods: paymentMethods,
     product_categories: productCategories,
     contact_name: contactName,
-    contact_email: contactEmail,
+    contact_email: contactEmail.toLowerCase(),
     contact_phone: contactPhone,
     submitter_display_name: showSubmitterName ? submitterDisplayName : null,
     show_submitter_name: showSubmitterName,
