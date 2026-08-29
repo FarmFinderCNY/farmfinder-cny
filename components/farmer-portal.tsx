@@ -28,6 +28,17 @@ export function FarmerPortal() {
     const { data: userData } = await supabase.auth.getUser();
     const id = userData.user?.id ?? "";
     setUserId(id);
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData.session?.access_token) {
+      try {
+        await fetch("/api/connect-approved-owner", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
+        });
+      } catch (connectionError) {
+        console.error("Approved owner connection failed:", connectionError);
+      }
+    }
     const loadFarms = async () => {
       const result = await supabase.from("farm_stands").select("id,owner_user_id,name,address,city,state,zip_code,latitude,longitude,description,phone,website,hours,payment_methods,product_categories,photo_url,is_verified,is_active,created_at,growing_practices,growing_practices_note,organic_certifier");
       if (result.error?.message.match(/growing_practices|organic_certifier/)) {
@@ -139,13 +150,13 @@ async function requestUpdate(event: FormEvent<HTMLFormElement>) {
 
   if (!signedIn) return <form className="admin-login farmer-login" onSubmit={authenticate}>
     <p className="eyebrow">Farmer portal</p><h1>{mode === "signin" ? "Welcome back." : "Create your account."}</h1>
-    <p>{mode === "signin" ? "Sign in to claim or update your farm listing." : "Use an email address you can access. You may need to confirm it."}</p>
+    <p>{mode === "signin" ? "Sign in to update your farm listing. If we already approved your ownership, your farm will connect automatically." : "Use the same email address you provided with your farm submission. You may need to confirm it."}</p>
     <div className="farmer-login-steps" aria-label="How the farmer portal works">
       <strong>New to FarmFinder?</strong>
       <ol>
         <li>Create your free account.</li>
-        <li>Request ownership of your farm or stand.</li>
-        <li>After approval, update what is available anytime.</li>
+        <li>If you already submitted your farm as its owner, use the same email address.</li>
+        <li>Once ownership is approved, the farm connects automatically—no second claim.</li>
       </ol>
     </div>
     <label>Email address<input type="email" name="email" required autoComplete="username" /></label>
