@@ -13,6 +13,7 @@ begin
     select 1
     from public.farm_stand_submissions submission
     where submission.submission_type = 'owner'
+      and submission.status in ('pending', 'approved')
       and lower(trim(submission.farm_name)) = lower(trim(new.name))
       and lower(trim(submission.address)) = lower(trim(coalesce(new.address, '')))
       and lower(trim(submission.city)) = lower(trim(coalesce(new.city, '')))
