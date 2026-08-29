@@ -21,6 +21,10 @@ export default async function Home() {
           <p className="eyebrow">Grown nearby · Shared locally</p>
           <h1>Fresh food,<br /><em>close to home.</em></h1>
           <p className="lede">Find farm stands, roadside markets, and honest local food throughout Central New York.</p>
+          <div className="keep-ny-callout">
+            <span aria-hidden="true">♥</span>
+            <div><strong>Keep NY Alive</strong><p>Every local purchase helps keep New York farms, stands, and communities alive.</p></div>
+          </div>
           <div className="hero-actions"><a className="primary-button" href="#stands">Find a farm stand <span>↓</span></a><Link className="text-button" href="/list-your-farm">I’m a farmer — list my stand →</Link></div>
         </div>
         <div className="hero-art" aria-hidden="true">
@@ -34,7 +38,7 @@ export default async function Home() {
       </header>
 
       <div className="marquee" aria-hidden="true">
-        <span>FARM FRESH</span><i>✦</i><span>LOCALLY GROWN</span><i>✦</i><span>COMMUNITY ROOTED</span><i>✦</i><span>CNY PROUD</span>
+        <span>KEEP NY ALIVE</span><i>✦</i><span>BUY LOCAL</span><i>✦</i><span>SUPPORT LOCAL FARMS</span><i>✦</i><span>CNY PROUD</span>
       </div>
 
       <section id="stands" className="stands-section shell">
@@ -58,7 +62,7 @@ export default async function Home() {
 
       <footer className="footer shell">
         <a className="brand" href="#top"><span>FF</span> FarmFinder <b>CNY</b></a>
-        <p>Helping Central New York find food grown closer to home.</p>
+        <p>Buy local. Support local farms. Help keep New York alive.</p>
       </footer>
     </main>
   );
