@@ -47,11 +47,12 @@ export default function ContactPage() {
     <main className="shell">
       <section style={{ maxWidth: "680px", padding: "60px 0" }}>
         <p className="eyebrow">FarmFinder CNY</p>
-        <h1>Contact Ronald</h1>
+        <h1>Contact FarmFinder CNY</h1>
 
         <p>
           Have a question, correction, privacy request, or idea for FarmFinder
-          CNY? Send a private message below.
+          CNY? Send a private message below or email{" "}
+          <a href="mailto:farmfindercny@gmail.com">farmfindercny@gmail.com</a>.
         </p>
 
         <form className="submission-form" onSubmit={handleSubmit}>
