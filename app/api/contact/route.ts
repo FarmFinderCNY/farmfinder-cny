@@ -52,7 +52,7 @@ export async function POST(request: Request) {
   }
 
   const resendKey = process.env.RESEND_API_KEY;
-  const adminEmail = process.env.FARMFINDER_ADMIN_EMAIL;
+  const adminEmail = "farmfindercny@gmail.com";
   let notified = false;
 
   if (resendKey && adminEmail) {
