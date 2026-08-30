@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
+import { AnalyticsPageTracker } from "@/components/analytics-tracker";
 import "./globals.css";
 import "./hero-fix.css";
 import "./farmer-fix.css";
@@ -20,7 +21,10 @@ export const viewport = { themeColor: "#183d2c" };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${sans.variable} ${display.variable}`}>{children}</body>
+      <body className={`${sans.variable} ${display.variable}`}>
+        <AnalyticsPageTracker />
+        {children}
+      </body>
     </html>
   );
 }
