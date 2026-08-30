@@ -45,13 +45,13 @@ export default async function Home() {
           <p className="eyebrow">More than a map</p>
           <h1>Fresh local food.<br /><em>Available today.</em></h1>
           <p className="lede">Discover nearby farm stands, see what products are currently available, and connect directly with the people growing your food.</p>
-          <div className="keep-ny-callout"><span aria-hidden="true">♥</span><div><strong>Keep NY Alive</strong><p>Every local purchase helps keep New York farms, stands, and communities alive.</p></div></div>
+          <div className="keep-ny-callout"><span aria-hidden="true">♥</span><div><strong>Keep NY Farming</strong><p>Find local food. Support local farms. Help keep New York farming strong.</p></div></div>
           <div className="hero-actions"><a className="primary-button" href="#stands">Find fresh food <span>↓</span></a><Link className="farmer-hero-button" href="/farmer">Manage my farm &amp; products</Link><Link className="hero-list-link" href="/list-your-farm">Add or suggest a farm →</Link></div>
           <div className="hero-message-row"><span>Find nearby farms</span><i>•</i><span>Check live products</span><i>•</i><span>Support local growers</span></div>
         </div>
       </header>
 
-      <div className="marquee" aria-hidden="true"><span>KEEP NY ALIVE</span><i>✦</i><span>BUY LOCAL</span><i>✦</i><span>SUPPORT LOCAL FARMS</span><i>✦</i><span>CNY PROUD</span></div>
+      <div className="marquee" aria-hidden="true"><span>KEEP NY FARMING</span><i>✦</i><span>BUY LOCAL</span><i>✦</i><span>SUPPORT LOCAL FARMS</span><i>✦</i><span>CNY PROUD</span></div>
 
       <section className="shell" style={{ paddingTop: "2.25rem" }}>
         <div className="notice" style={{ textAlign: "center", padding: "1.5rem" }}>
@@ -68,7 +68,7 @@ export default async function Home() {
         {configured && stands.length === 0 ? <div className="empty-state"><span>🌱</span><h3>The first listings are taking root.</h3><p>Active farm stands will show here automatically.</p></div> : <StandDirectory stands={stands} />}
       </section>
 
-      <footer className="footer shell"><a className="brand" href="#top"><span>FF</span> FarmFinder <b>CNY</b></a><p>Buy local. Support local farms. Help keep New York alive.{" "}<Link href="/contact">Contact Ronald</Link>{" · "}<Link href="/privacy">Privacy Policy</Link></p></footer>
+      <footer className="footer shell"><a className="brand" href="#top"><span>FF</span> FarmFinder <b>CNY</b></a><p>Buy local. Support local farms. Keep NY farming.{" "}<Link href="/contact">Contact Ronald</Link>{" · "}<Link href="/privacy">Privacy Policy</Link></p></footer>
     </main>
   );
 }
