@@ -68,7 +68,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <footer className="footer shell"><a className="brand" href="#top"><span>FF</span> FarmFinder <b>CNY</b></a><p>Buy local. Support local farms. Keep NY farming.{" "}<Link href="/contact">Contact Ronald</Link>{" · "}<Link href="/privacy">Privacy Policy</Link></p></footer>
+      <footer className="footer shell"><a className="brand" href="#top"><span>FF</span> FarmFinder <b>CNY</b></a><p>Buy local. Support local farms. Keep NY farming.{" "}<Link href="/contact">Contact FarmFinder CNY</Link>{" · "}<Link href="/privacy">Privacy Policy</Link></p></footer>
     </main>
   );
 }
