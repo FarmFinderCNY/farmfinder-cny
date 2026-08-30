@@ -3,7 +3,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
-import { getSupabaseClient } from "@/lib/supabase";
 
 export default function ContactPage() {
   const [sending, setSending] = useState(false);
@@ -14,38 +13,34 @@ export default function ContactPage() {
     setSending(true);
     setResult("");
 
-    const form = new FormData(event.currentTarget);
-    const website = String(form.get("company_website") ?? "");
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const payload = {
+      company_website: String(form.get("company_website") ?? ""),
+      name: String(form.get("name") ?? "").trim(),
+      email: String(form.get("email") ?? "").trim().toLowerCase(),
+      message: String(form.get("message") ?? "").trim(),
+    };
 
-    if (website) {
-      setResult("Thanks! Your message has been received.");
-      setSending(false);
-      event.currentTarget.reset();
-      return;
-    }
-
-    const name = String(form.get("name") ?? "").trim();
-    const email = String(form.get("email") ?? "").trim().toLowerCase();
-    const contactMessage = String(form.get("message") ?? "").trim();
-
-    const { error } = await getSupabaseClient()
-      .from("contact_messages")
-      .insert({
-        name,
-        email,
-        message: contactMessage,
-        status: "new",
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
+      const responseBody = await response.json() as { error?: string };
+      if (!response.ok) {
+        setResult(responseBody.error ?? "We couldn’t send your message. Please try again.");
+        return;
+      }
 
-    if (error) {
+      setResult("Thanks! Your message has been received by FarmFinder CNY.");
+      formElement.reset();
+    } catch {
       setResult("We couldn’t send your message. Please try again.");
+    } finally {
       setSending(false);
-      return;
     }
-
-    setResult("Thanks! Your message has been sent to Ronald at FarmFinder CNY.");
-    setSending(false);
-    event.currentTarget.reset();
   }
 
   return (
@@ -95,11 +90,11 @@ export default function ContactPage() {
             {sending ? "Sending..." : "Send private message"}
           </button>
 
-        {result && (
-  <p role="status" style={{ marginTop: "18px" }}>
-    {result}
-  </p>
-)}
+          {result && (
+            <p role="status" style={{ marginTop: "18px" }}>
+              {result}
+            </p>
+          )}
         </form>
 
         <div style={{ marginTop: "28px" }}>
