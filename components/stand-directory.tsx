@@ -161,23 +161,27 @@ function distanceInMiles(from: UserLocation, stand: FarmStand) {
 }
 
 function productMatches(productName: string, vegetable: string) {
-  const product = productName.toLowerCase();
-  const target = vegetable.toLowerCase();
-  if (target === "corn") return product.includes("corn");
-  if (target === "greens") return product.includes("green") || product.includes("chard") || product.includes("collard");
-  if (target === "squash") return product.includes("squash");
-  if (target === "beans") return product.includes("bean");
-  if (target === "peas") return product.includes("pea");
-  if (target === "peppers") return product.includes("pepper");
-  if (target === "potatoes") return product.includes("potato");
-  if (target === "tomatoes") return product.includes("tomato");
-  if (target === "onions") return product.includes("onion");
-  if (target === "carrots") return product.includes("carrot");
-  if (target === "cucumbers") return product.includes("cucumber");
-  if (target === "pumpkins") return product.includes("pumpkin");
-  if (target === "radishes") return product.includes("radish");
-  if (target === "turnips") return product.includes("turnip");
-  return product.includes(target);
+  const product = normalizeSearchText(productName);
+  const target = normalizeSearchText(vegetable);
+  const exactWord = (pattern: string) => new RegExp("\\b(?:" + pattern + ")\\b", "i").test(product);
+
+  if (target === "corn") return exactWord("corn");
+  if (target === "greens") return exactWord("green|greens|chard|collard|collards");
+  if (target === "squash") return exactWord("squash");
+  if (target === "beans") return exactWord("bean|beans");
+  if (target === "peas") return exactWord("pea|peas");
+  if (target === "peppers") return exactWord("pepper|peppers");
+  if (target === "potatoes") return exactWord("potato|potatoes");
+  if (target === "tomatoes") return exactWord("tomato|tomatoes");
+  if (target === "onions") return exactWord("onion|onions");
+  if (target === "carrots") return exactWord("carrot|carrots");
+  if (target === "cucumbers") return exactWord("cucumber|cucumbers");
+  if (target === "pumpkins") return exactWord("pumpkin|pumpkins");
+  if (target === "radishes") return exactWord("radish|radishes");
+  if (target === "turnips") return exactWord("turnip|turnips");
+
+  const escapedTarget = target.replace(/[.*+?^$()|[\\]\\\\]/g, "\\$&");
+  return exactWord(escapedTarget);
 }
 
 export function StandDirectory({ stands }: { stands: FarmStand[] }) {
