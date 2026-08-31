@@ -26,6 +26,11 @@ export function FarmerInventory({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [lastConfirmedAt, setLastConfirmedAt] = useState<string | null>(null);
+  const hasProducts = items.length > 0;
+  const isFresh = Boolean(
+    lastConfirmedAt &&
+    Date.now() - new Date(lastConfirmedAt).getTime() < 7 * 24 * 60 * 60 * 1000
+  );
 
   async function notifySubscribers(inventoryItemId: string) {
     try {
@@ -98,7 +103,7 @@ const loadInventory = useCallback(async () => {
     if (confirmationError) setError("FarmFinder could not confirm the listing. Please try again.");
     else {
       setLastConfirmedAt(updatedAt);
-      setMessage("Confirmed—customers will see this availability as current.");
+      setMessage("Confirmed—your listing is current for the next 7 days, so customers know it is worth the trip.");
     }
     setLoading(false);
   }
@@ -152,7 +157,7 @@ const loadInventory = useCallback(async () => {
       })
       .eq("id", farmId);
 
-    setMessage("Product added.");
+    setMessage("Product added—your listing is now current for the next 7 days.");
     await loadInventory();
     if (insertedItem) void notifySubscribers(insertedItem.id);
   } catch (err) {
@@ -196,7 +201,7 @@ const loadInventory = useCallback(async () => {
         })
         .eq("id", farmId);
 
-      setMessage("Inventory updated.");
+      setMessage("Inventory updated—your listing is current for the next 7 days.");
       await loadInventory();
       const nextStatus = changes.status ?? item.status;
       if (nextStatus === "available" || nextStatus === "low") {
@@ -266,6 +271,31 @@ const loadInventory = useCallback(async () => {
           Refresh
         </button>
       </div>
+
+      <section className="farmer-onboarding" aria-label="Getting started checklist">
+        <div className="onboarding-heading">
+          <div>
+            <p className="eyebrow">{hasProducts && isFresh ? "Listing ready" : "Start here"}</p>
+            <h3>{hasProducts && isFresh ? "Customers can trust what they see." : "Get your listing working in 3 simple steps."}</h3>
+          </div>
+          <strong>{Number(hasProducts) + Number(isFresh)}/2 complete</strong>
+        </div>
+        <ol>
+          <li className={hasProducts ? "complete" : ""}>
+            <span>{hasProducts ? "✓" : "1"}</span>
+            <div><strong>Add your first product</strong><small>Tell customers what they can find at your farm.</small></div>
+          </li>
+          <li className={isFresh ? "complete" : ""}>
+            <span>{isFresh ? "✓" : "2"}</span>
+            <div><strong>Confirm current availability</strong><small>Your products show as current for seven days.</small></div>
+          </li>
+          <li>
+            <span>3</span>
+            <div><strong>Check your public listing</strong><small>See exactly what customers see.</small></div>
+            <a href={`/farms/${farmId}`} target="_blank" rel="noreferrer">View listing ↗</a>
+          </li>
+        </ol>
+      </section>
 
       {error && (
         <p className="form-error admin-error">{error}</p>
