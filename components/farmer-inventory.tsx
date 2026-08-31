@@ -278,7 +278,7 @@ const loadInventory = useCallback(async () => {
             <p className="eyebrow">{hasProducts && isFresh ? "Listing ready" : "Start here"}</p>
             <h3>{hasProducts && isFresh ? "Customers can trust what they see." : "Get your listing working in 3 simple steps."}</h3>
           </div>
-          <strong>{Number(hasProducts) + Number(isFresh)}/2 complete</strong>
+          <strong>{hasProducts && isFresh ? "Ready" : `${Number(hasProducts) + Number(isFresh)}/2 key actions`}</strong>
         </div>
         <ol>
           <li className={hasProducts ? "complete" : ""}>
