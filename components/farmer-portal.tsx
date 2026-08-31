@@ -12,6 +12,7 @@ type Claim = { id: string; farm_id: string; status: string; created_at: string }
 export function FarmerPortal() {
   const searchParams = useSearchParams();
   const requestedFarmId = searchParams.get("claim");
+  const quickConfirmFarmId = searchParams.get("confirm");
   const [signedIn, setSignedIn] = useState(false);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [farms, setFarms] = useState<FarmStand[]>([]);
@@ -22,6 +23,7 @@ export function FarmerPortal() {
   const [error, setError] = useState("");
   const [editing, setEditing] = useState<FarmStand | null>(null);
   const [claiming, setClaiming] = useState<FarmStand | null>(null);
+  const [quickConfirmationHandled, setQuickConfirmationHandled] = useState(false);
   const loadPortal = useCallback(async () => {
     setLoading(true); setError("");
     const supabase = getBrowserSupabaseClient();
@@ -61,6 +63,30 @@ export function FarmerPortal() {
       if (active) void loadPortal(); else setLoading(false);
     });
   }, [loadPortal]);
+
+  useEffect(() => {
+    if (!signedIn || loading || quickConfirmationHandled || !quickConfirmFarmId || !userId) return;
+    const ownedFarm = farms.find((farm) => farm.id === quickConfirmFarmId && farm.owner_user_id === userId);
+    if (!ownedFarm) return;
+
+    setQuickConfirmationHandled(true);
+    const confirm = async () => {
+      const updatedAt = new Date().toISOString();
+      const { error: confirmationError } = await getBrowserSupabaseClient()
+        .from("farm_stands")
+        .update({ inventory_updated_at: updatedAt, farmer_inventory_updated_at: updatedAt })
+        .eq("id", ownedFarm.id)
+        .eq("owner_user_id", userId);
+
+      if (confirmationError) {
+        setError("FarmFinder could not confirm the listing. Please use the confirmation button below.");
+      } else {
+        setMessage(`${ownedFarm.name} is confirmed current for the next 7 days.`);
+        window.history.replaceState({}, "", "/farmer");
+      }
+    };
+    void confirm();
+  }, [farms, loading, quickConfirmFarmId, quickConfirmationHandled, signedIn, userId]);
 
   async function authenticate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setLoading(true); setError(""); setMessage("");
