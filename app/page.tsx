@@ -63,8 +63,8 @@ export default async function Home() {
         <div className="notice" style={{ textAlign: "center", padding: "1.5rem" }}>
           <p className="eyebrow">📰 Upcoming Feature</p>
           <h2 style={{ margin: "0.35rem 0 0.65rem" }}>FarmFinder CNY is coming to <em>In Good Health</em>.</h2>
-          <p>FarmFinder CNY is scheduled to be featured in an upcoming October 2026 edition of <em>In Good Health</em>.</p>
-          <p style={{ marginTop: "0.65rem" }}><strong>Coming October 2026</strong> · Check back after publication for a link to the feature.</p>
+          <p>FarmFinder CNY is scheduled to be featured in an upcoming edition of <em>In Good Health</em>.</p>
+          <p style={{ marginTop: "0.65rem" }}><strong>Upcoming Feature</strong> · Check back after publication for a link to the feature.</p>
         </div>
       </section>
 
