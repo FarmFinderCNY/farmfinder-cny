@@ -160,6 +160,18 @@ function getMatchingProducts(stand: FarmStand, search: string) {
   });
 }
 
+function matchesListedProduct(stand: FarmStand, search: string) {
+  const query = normalizeSearchText(search);
+  if (!query) return false;
+  const listedProductText = normalizeSearchText([
+    stand.description,
+    ...stand.product_categories,
+  ].filter(Boolean).join(" "));
+
+  return expandedSearchTerms(query).some((term) => listedProductText.includes(term)) ||
+    matchesWithLightTypoTolerance(query, listedProductText);
+}
+
 function distanceInMiles(from: UserLocation, stand: FarmStand) {
   if (stand.latitude === null || stand.longitude === null) return null;
   const toRadians = (value: number) => value * Math.PI / 180;
@@ -481,7 +493,7 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
         <div><p className="eyebrow">Matching stands</p><h3>{filtered.length} {filtered.length === 1 ? "farm found" : "farms found"}</h3></div>
         <p>Showing {visible.length} of {filtered.length}</p>
       </div>
-      <div className="stand-grid">{visible.map((stand) => <StandCard key={stand.id} stand={stand} distanceMiles={userLocation ? distanceInMiles(userLocation, stand) : null} matchingProducts={getMatchingProducts(stand, search)} />)}</div>
+      <div className="stand-grid">{visible.map((stand) => <StandCard key={stand.id} stand={stand} distanceMiles={userLocation ? distanceInMiles(userLocation, stand) : null} matchingProducts={getMatchingProducts(stand, search)} listedProductMatch={matchesListedProduct(stand, search)} searchLabel={search.trim()} />)}</div>
       {remaining > 0 && <div className="show-more-row"><button type="button" className="show-more-button" onClick={() => setVisibleCount((count) => count + pageSize)}>Show {Math.min(pageSize, remaining)} more <span>↓</span></button><p>{remaining} remaining</p></div>}
     </> : <div className="empty-state"><span>🌾</span><h3>No matching farm stands yet.</h3><p>Try another town, product, or category.</p></div>}
     </div>
