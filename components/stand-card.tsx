@@ -12,10 +12,14 @@ export function StandCard({
   stand,
   distanceMiles = null,
   matchingProducts = [],
+  listedProductMatch = false,
+  searchLabel = "",
 }: {
   stand: FarmStand;
   distanceMiles?: number | null;
   matchingProducts?: InventoryItem[];
+  listedProductMatch?: boolean;
+  searchLabel?: string;
 }) {
   const location = [stand.address, stand.city, stand.state, stand.zip_code].filter(Boolean).join(", ");
   const directions = stand.latitude !== null && stand.longitude !== null
@@ -48,10 +52,16 @@ export function StandCard({
           <span>{matchingProducts.slice(0, 3).map((item) => item.status === "available" ? `${item.name} · Available` : item.status === "low" ? `${item.name} · Low` : `${item.name} · Sold out`).join(" · ")}{matchingProducts.length > 3 ? ` · +${matchingProducts.length - 3} more` : ""}</span>
         </div>
       )}
-      {matchingProducts.length === 0 && updatedWithinSevenDays && availableToday.length > 0 && (
+      {matchingProducts.length === 0 && listedProductMatch && searchLabel && (
+        <div className="inventory-summary">
+          <strong>Matches your search</strong>
+          <span>{searchLabel} · Usually offers</span>
+        </div>
+      )}
+      {matchingProducts.length === 0 && !listedProductMatch && updatedWithinSevenDays && availableToday.length > 0 && (
         <div className="inventory-summary"><strong>Available today</strong><span>{availableToday.slice(0, 3).map((item) => item.status === "low" ? `${item.name} (low)` : item.name).join(" · ")}{availableToday.length > 3 ? ` · +${availableToday.length - 3} more` : ""}</span>{stand.farmer_inventory_updated_at && <span>Updated {new Date(stand.farmer_inventory_updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>}</div>
       )}
-      {matchingProducts.length === 0 && (!updatedWithinSevenDays || availableToday.length === 0) && stand.product_categories.length > 0 && (
+      {matchingProducts.length === 0 && !listedProductMatch && (!updatedWithinSevenDays || availableToday.length === 0) && stand.product_categories.length > 0 && (
         <div className="category-group"><div className="category-chips">{stand.product_categories.slice(0, 4).map((category) => <span key={category}>{category}</span>)}</div></div>
       )}
       <div className="card-links">
