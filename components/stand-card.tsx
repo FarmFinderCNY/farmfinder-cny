@@ -6,7 +6,17 @@ import Link from "next/link";
 import { getGrowingPracticeCardBadge } from "@/lib/growing-practices";
 import { recordAnalyticsEvent } from "@/components/analytics-tracker";
 
-export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; distanceMiles?: number | null }) {
+type InventoryItem = FarmStand["inventory"][number];
+
+export function StandCard({
+  stand,
+  distanceMiles = null,
+  matchingProducts = [],
+}: {
+  stand: FarmStand;
+  distanceMiles?: number | null;
+  matchingProducts?: InventoryItem[];
+}) {
   const location = [stand.address, stand.city, stand.state, stand.zip_code].filter(Boolean).join(", ");
   const directions = stand.latitude !== null && stand.longitude !== null
     ? `https://www.google.com/maps/dir/?api=1&destination=${stand.latitude},${stand.longitude}`
@@ -32,10 +42,16 @@ export function StandCard({ stand, distanceMiles = null }: { stand: FarmStand; d
       <p className="location">{[stand.city, stand.state].filter(Boolean).join(", ") || location || "Central New York"}{distanceMiles !== null && <strong className="distance"> · {distanceMiles < 10 ? distanceMiles.toFixed(1) : Math.round(distanceMiles)} miles away</strong>}</p>
       {practiceBadge && <span className="practice-card-badge">🌱 {practiceBadge}</span>}
       {stand.submission_type === "community" && <p className="community-attribution">Community submitted{stand.submitted_by_display_name ? ` by ${stand.submitted_by_display_name}` : ""} · Not yet owner-verified</p>}
-      {updatedWithinSevenDays && availableToday.length > 0 && (
+      {matchingProducts.length > 0 && (
+        <div className="inventory-summary">
+          <strong>Matches your search</strong>
+          <span>{matchingProducts.slice(0, 3).map((item) => item.status === "available" ? `${item.name} · Available` : item.status === "low" ? `${item.name} · Low` : `${item.name} · Sold out`).join(" · ")}{matchingProducts.length > 3 ? ` · +${matchingProducts.length - 3} more` : ""}</span>
+        </div>
+      )}
+      {matchingProducts.length === 0 && updatedWithinSevenDays && availableToday.length > 0 && (
         <div className="inventory-summary"><strong>Available today</strong><span>{availableToday.slice(0, 3).map((item) => item.status === "low" ? `${item.name} (low)` : item.name).join(" · ")}{availableToday.length > 3 ? ` · +${availableToday.length - 3} more` : ""}</span>{stand.farmer_inventory_updated_at && <span>Updated {new Date(stand.farmer_inventory_updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>}</div>
       )}
-      {(!updatedWithinSevenDays || availableToday.length === 0) && stand.product_categories.length > 0 && (
+      {matchingProducts.length === 0 && (!updatedWithinSevenDays || availableToday.length === 0) && stand.product_categories.length > 0 && (
         <div className="category-group"><div className="category-chips">{stand.product_categories.slice(0, 4).map((category) => <span key={category}>{category}</span>)}</div></div>
       )}
       <div className="card-links">
