@@ -55,7 +55,7 @@ export function StandCard({
       {matchingProducts.length === 0 && listedProductMatch && searchLabel && (
         <div className="inventory-summary">
           <strong>Matches your search</strong>
-          <span>{searchLabel} · Usually offers</span>
+          <span>{searchLabel}</span>
         </div>
       )}
       {matchingProducts.length === 0 && !listedProductMatch && updatedWithinSevenDays && availableToday.length > 0 && (
