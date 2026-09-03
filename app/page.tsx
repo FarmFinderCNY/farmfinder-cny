@@ -62,7 +62,7 @@ export default async function Home() {
       <section className="shell" style={{ paddingTop: "2rem" }}>
         <div className="notice" style={{ textAlign: "center", padding: "1.5rem" }}>
           <p className="eyebrow">📰 FarmFinder CNY in the News</p>
-          <h2 style={{ margin: "0.35rem 0 0.65rem" }}>Featured by Sentinel Media Company</h2>
+          <h2 style={{ margin: "0.35rem 0 0.65rem" }}>Featured by Sentinel Media Company, publisher of the Daily Sentinel</h2>
           <p>Read the story about FarmFinder CNY and its mission to connect Central New York communities with local farms and farm stands.</p>
           <p style={{ marginTop: "0.8rem" }}><a className="primary-button" href="https://www.romesentinel.com/news/farmfindercny/article_b28abbd6-55fc-44e2-bc49-d2f91e5153b4.html" target="_blank" rel="noopener noreferrer">Read the Article →</a></p>
           <div style={{ borderTop: "1px solid rgba(0,0,0,0.12)", marginTop: "1.5rem", paddingTop: "1.25rem" }}>
