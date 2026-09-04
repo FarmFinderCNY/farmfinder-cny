@@ -61,15 +61,16 @@ export default async function Home() {
 
       <section className="shell" style={{ paddingTop: "2rem" }}>
         <div className="notice" style={{ textAlign: "center", padding: "1.5rem" }}>
-          <p className="eyebrow">📰 FarmFinder CNY in the News</p>
-          <h2 style={{ margin: "0.35rem 0 0.65rem" }}>Featured by Sentinel Media Company, publisher of the Daily Sentinel</h2>
-          <p>Read the story about FarmFinder CNY and its mission to connect Central New York communities with local farms and farm stands.</p>
-          <p style={{ marginTop: "0.8rem" }}><a className="primary-button" href="https://www.romesentinel.com/news/farmfindercny/article_b28abbd6-55fc-44e2-bc49-d2f91e5153b4.html" target="_blank" rel="noopener noreferrer">Read the Article →</a></p>
+          <p className="eyebrow">📰 FarmFinder CNY in the Media</p>
+          <h2 style={{ margin: "0.35rem 0 0.65rem" }}>Featured by Sentinel Media Company</h2>
+          <p><strong>Publisher of <em>The Daily Sentinel</em></strong></p>
+          <p style={{ marginTop: "0.65rem" }}>FarmFinder CNY was featured for helping Central New Yorkers discover and connect with local farms and farm stands.</p>
+          <p style={{ marginTop: "0.8rem" }}><a className="primary-button" href="https://www.romesentinel.com/news/farmfindercny/article_b28abbd6-55fc-44e2-bc49-d2f91e5153b4.html" target="_blank" rel="noopener noreferrer">Read the Daily Sentinel Feature →</a></p>
           <div style={{ borderTop: "1px solid rgba(0,0,0,0.12)", marginTop: "1.5rem", paddingTop: "1.25rem" }}>
             <p className="eyebrow">📰 Upcoming Feature</p>
-            <h2 style={{ margin: "0.35rem 0 0.65rem" }}>FarmFinder CNY is coming to <em>In Good Health</em>.</h2>
+            <h2 style={{ margin: "0.35rem 0 0.65rem" }}><em>In Good Health</em></h2>
             <p>FarmFinder CNY is scheduled to be featured in an upcoming edition of <em>In Good Health</em>.</p>
-            <p style={{ marginTop: "0.65rem" }}><strong>Upcoming Feature</strong> · Check back after publication for a link to the feature.</p>
+            <p style={{ marginTop: "0.65rem" }}>Check back after publication for the feature.</p>
           </div>
         </div>
       </section>
