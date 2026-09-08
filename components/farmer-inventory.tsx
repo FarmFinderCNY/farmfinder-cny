@@ -33,11 +33,11 @@ export function FarmerInventory({
     Date.now() - new Date(lastConfirmedAt).getTime() < 7 * 24 * 60 * 60 * 1000,
   );
 
-  async function notifySubscribers(inventoryItemId: string) {
+  async function notifySubscribers(inventoryItemId: string): Promise<{ sent: number; failed: number }> {
     try {
       const { data } = await getBrowserSupabaseClient().auth.getSession();
       const accessToken = data.session?.access_token;
-      if (!accessToken) return;
+      if (!accessToken) return { sent: 0, failed: 0 };
       const response = await fetch("/api/inventory-alerts/dispatch", {
         method: "POST",
         headers: {
@@ -46,13 +46,26 @@ export function FarmerInventory({
         },
         body: JSON.stringify({ farmId, inventoryItemId }),
       });
-      if (!response.ok)
-        console.error(
-          "Unable to deliver inventory alerts:",
-          await response.text(),
-        );
+      if (!response.ok) throw new Error(await response.text());
+      const result = await response.json() as { sent?: unknown; failed?: unknown };
+      return {
+        sent: typeof result.sent === "number" ? result.sent : 0,
+        failed: typeof result.failed === "number" ? result.failed : 0,
+      };
     } catch (notificationError) {
       console.error("Inventory alert delivery failed:", notificationError);
+      return { sent: 0, failed: 1 };
+    }
+  }
+
+  function alertResultMessage(savedMessage: string, result: { sent: number; failed: number }) {
+    if (result.failed > 0) {
+      setError("Your product update is live, but at least one customer alert could not be delivered.");
+      setMessage(savedMessage);
+    } else if (result.sent > 0) {
+      setMessage(`${savedMessage} ${result.sent} customer alert${result.sent === 1 ? "" : "s"} sent.`);
+    } else {
+      setMessage(savedMessage);
     }
   }
 
@@ -162,9 +175,9 @@ export function FarmerInventory({
         return;
       }
       setLastConfirmedAt(updatedAt);
-      setMessage(`${name} added and marked available.`);
       await loadInventory();
-      if (insertedItem) void notifySubscribers(insertedItem.id);
+      const alertResult = insertedItem ? await notifySubscribers(insertedItem.id) : { sent: 0, failed: 0 };
+      alertResultMessage(`${name} added and marked available.`, alertResult);
     } catch (err) {
       console.error(err);
       setError(
@@ -223,13 +236,15 @@ export function FarmerInventory({
       );
     else {
       setLastConfirmedAt(updatedAt);
-      setMessage(
-        `${item.name}: ${status === "available" ? "Available" : status === "low" ? "Low stock" : "Sold out"}. Saved.`,
-      );
+      const savedMessage = `${item.name}: ${status === "available" ? "Available" : status === "low" ? "Low stock" : "Sold out"}. Saved.`;
+      if (status === "available" || status === "low") {
+        const alertResult = await notifySubscribers(item.id);
+        alertResultMessage(savedMessage, alertResult);
+      } else {
+        setMessage(savedMessage);
+      }
     }
     setSavingItemId(null);
-    if (status === "available" || status === "low")
-      void notifySubscribers(item.id);
   }
 
   async function removeItem(item: InventoryItem) {

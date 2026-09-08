@@ -39,6 +39,7 @@ export async function POST(request: Request) {
   const matches = ((subscriptions ?? []) as AlertSubscription[]).filter((subscription) => { const requestedProduct = normalizeProduct(subscription.product_name); return requestedProduct === "__farm_updates__" || (requestedProduct && (itemName.includes(requestedProduct) || requestedProduct.includes(itemName))); });
 
   let sent = 0;
+  let failed = 0;
   for (const subscription of matches) {
     const isFarmFollow = subscription.product_name === "__farm_updates__";
     const details = [item.quantity, item.price].filter(Boolean).map((value) => escapeHtml(String(value))).join(" · ");
@@ -47,10 +48,10 @@ export async function POST(request: Request) {
       subject: isFarmFollow ? `${farm.name}: ${item.name} is available` : `${item.name} is available at ${farm.name}`,
       html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#123f2d"><p style="font-weight:700;text-transform:uppercase;letter-spacing:.08em">FarmFinder CNY</p><h1>${escapeHtml(item.name)} ${item.status === "low" ? "is running low" : "is available"}</h1><h2>${escapeHtml(farm.name)}</h2>${details ? `<p>${details}</p>` : ""}<p><a href="https://www.farmfindercny.com/farms/${encodeURIComponent(farmId)}?utm_source=follow_email&utm_medium=email" style="display:inline-block;padding:12px 18px;background:#123f2d;color:white;text-decoration:none;border-radius:6px">See what’s fresh</a></p><p style="color:#68756c;font-size:13px">${isFarmFollow ? `You’re following ${escapeHtml(farm.name)} on FarmFinder. You’ll keep receiving fresh availability updates from this farm.` : "This product alert was one-time and has now been completed."}</p></div>`,
     }) });
-    if (!emailResponse.ok) { console.error("Inventory alert email failed:", await emailResponse.text()); continue; }
+    if (!emailResponse.ok) { console.error("Inventory alert email failed:", await emailResponse.text()); failed += 1; continue; }
     // Product alerts are one-time. Farm follows remain active so the relationship persists.
     if (!isFarmFollow) await serviceClient.from("inventory_alert_subscriptions").update({ active: false }).eq("id", subscription.id);
     sent += 1;
   }
-  return NextResponse.json({ sent });
+  return NextResponse.json({ matched: matches.length, sent, failed });
 }
