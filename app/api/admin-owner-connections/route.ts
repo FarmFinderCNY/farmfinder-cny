@@ -18,6 +18,25 @@ const invitationSentAt = (user: { user_metadata?: Record<string, unknown> } | un
   return typeof value === "string" && !Number.isNaN(Date.parse(value)) ? value : null;
 };
 
+const invitationEmailId = (user: { user_metadata?: Record<string, unknown> } | undefined) => {
+  const value = user?.user_metadata?.owner_access_invitation_email_id;
+  return typeof value === "string" && value.trim() ? value : null;
+};
+
+async function getDeliveryStatus(emailId: string, resendKey: string) {
+  try {
+    const response = await fetch(`https://api.resend.com/emails/${encodeURIComponent(emailId)}`, {
+      headers: { Authorization: `Bearer ${resendKey}` },
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+    const result = await response.json() as { last_event?: unknown };
+    return typeof result.last_event === "string" ? result.last_event : null;
+  } catch {
+    return null;
+  }
+}
+
 const normalize = (value: string | null | undefined) => (value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
 const matchesSubmission = (farm: Farm, submission: OwnerSubmission) =>
   normalize(farm.name) === normalize(submission.farm_name) &&
@@ -44,7 +63,7 @@ async function getAdminClients(request: Request) {
 export async function GET(request: Request) {
   const clients = await getAdminClients(request);
   if (!clients) return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
-  const { serviceClient } = clients;
+  const { serviceClient, resendKey } = clients;
   const [submissionResult, farmResult, userResult] = await Promise.all([
     serviceClient.from("farm_stand_submissions").select("id,farm_name,address,city,state,zip_code,contact_email,created_at").eq("submission_type", "owner").eq("status", "approved").order("created_at", { ascending: false }),
     serviceClient.from("farm_stands").select("id,name,address,city,state,zip_code,owner_user_id,owner_access_activated_at,farmer_inventory_updated_at").eq("is_active", true),
@@ -55,14 +74,18 @@ export async function GET(request: Request) {
   const usersByEmail = new Map(userResult.users.map((user) => [user.email?.trim().toLowerCase(), user]));
   const usersById = new Map(userResult.users.map((user) => [user.id, user]));
   const seenFarmIds = new Set<string>();
-  const issues = ((submissionResult.data ?? []) as OwnerSubmission[]).flatMap((submission) => {
+  const pendingIssues = ((submissionResult.data ?? []) as OwnerSubmission[]).flatMap((submission) => {
     const farm = farms.find((candidate) => matchesSubmission(candidate, submission));
     if (!farm || seenFarmIds.has(farm.id)) return [];
     seenFarmIds.add(farm.id);
     const user = (farm.owner_user_id ? usersById.get(farm.owner_user_id) : undefined) ?? usersByEmail.get(submission.contact_email.trim().toLowerCase());
     if (farm.owner_user_id && user?.email_confirmed_at) return [];
-    return [{ submission_id: submission.id, farm_id: farm.id, farm_name: farm.name, contact_email: submission.contact_email, account_exists: Boolean(user), email_confirmed: Boolean(user?.email_confirmed_at), invitation_sent_at: invitationSentAt(user) }];
+    return [{ submission_id: submission.id, farm_id: farm.id, farm_name: farm.name, contact_email: submission.contact_email, account_exists: Boolean(user), email_confirmed: Boolean(user?.email_confirmed_at), invitation_sent_at: invitationSentAt(user), invitation_email_id: invitationEmailId(user) }];
   });
+  const issues = await Promise.all(pendingIssues.map(async (issue) => ({
+    ...issue,
+    delivery_status: issue.invitation_email_id ? await getDeliveryStatus(issue.invitation_email_id, resendKey) : null,
+  })));
   const activated = farms.filter((farm) => Boolean(farm.owner_user_id && farm.owner_access_activated_at)).length;
   const updatingProducts = farms.filter((farm) => Boolean(farm.owner_access_activated_at && farm.farmer_inventory_updated_at)).length;
   return NextResponse.json({ issues, summary: { activated, awaiting_activation: issues.length, updating_products: updatingProducts, activated_without_updates: Math.max(0, activated - updatingProducts) } });

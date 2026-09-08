@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
 
-type Issue = { submission_id: string; farm_id: string; farm_name: string; contact_email: string; account_exists: boolean; email_confirmed: boolean; invitation_sent_at: string | null };
+type Issue = { submission_id: string; farm_id: string; farm_name: string; contact_email: string; account_exists: boolean; email_confirmed: boolean; invitation_sent_at: string | null; invitation_email_id: string | null; delivery_status: string | null };
 type OwnerSummary = { activated: number; awaiting_activation: number; updating_products: number; activated_without_updates: number };
 
 export function AdminOwnerConnections() {
@@ -46,6 +46,15 @@ export function AdminOwnerConnections() {
   if (!loading && issues.length === 0 && !message && !error) return null;
   return <section className="admin-analytics owner-connection-audit"><div className="admin-analytics-heading"><div><p className="eyebrow">Owner access check</p><h2>Farmer activation</h2><p>See who activated access and whether activated farmers have started updating products.</p></div><button type="button" onClick={() => void load()} disabled={loading}>{loading ? "Checking…" : "Check again"}</button></div>{summary && <div className="admin-analytics-grid"><article><strong>{summary.activated}</strong><span>Activated owners</span></article><article><strong>{summary.awaiting_activation}</strong><span>Awaiting activation</span></article><article><strong>{summary.updating_products}</strong><span>Updating products</span></article><article><strong>{summary.activated_without_updates}</strong><span>Activated, no update yet</span></article></div>}{error && <p className="form-error admin-error">{error}</p>}{message && <p className="form-success portal-message">{message}</p>}{issues.map((issue) => {
     const invitationSent = Boolean(issue.invitation_sent_at);
-    return <article className="review-card" key={issue.farm_id}><div className="review-heading"><div><span className="pending-badge">{invitationSent ? "Invitation sent" : "Connection missing"}</span><h2>{issue.farm_name}</h2><p>{issue.contact_email}</p></div></div><p className="review-note">{invitationSent ? "Invitation sent—awaiting owner activation. No additional invitation will be sent automatically." : issue.account_exists ? issue.email_confirmed ? "A confirmed account exists and can be connected." : "An invited account exists and can be connected." : "No account exists yet; repairing will send an invitation."}</p><div className="review-actions"><button className="approve-button" type="button" disabled={invitationSent || workingId === issue.submission_id} onClick={() => void repair(issue)}>{workingId === issue.submission_id ? "Repairing…" : invitationSent ? "Awaiting owner" : "Repair owner access"}</button></div></article>;
+    const successfulDelivery = ["delivered", "opened", "clicked"].includes(issue.delivery_status ?? "");
+    const deliveryProblem = ["bounced", "failed", "canceled", "complained"].includes(issue.delivery_status ?? "");
+    const statusLabel = !invitationSent ? "Connection missing" : successfulDelivery ? "Email delivered" : deliveryProblem ? "Delivery problem" : issue.invitation_email_id ? "Email sent" : "Sent before tracking";
+    const note = !invitationSent
+      ? issue.account_exists ? issue.email_confirmed ? "A confirmed account exists and can be connected." : "An invited account exists and can be connected." : "No account exists yet; repairing will send an invitation."
+      : successfulDelivery ? "The invitation reached the farmer's email provider and is awaiting owner activation."
+      : deliveryProblem ? `Resend reports ${issue.delivery_status}. Review the address before contacting the farmer.`
+      : issue.invitation_email_id ? `Resend status: ${issue.delivery_status ?? "status temporarily unavailable"}. Awaiting owner activation.`
+      : "This invitation was sent before delivery tracking was added. It remains protected from duplicate sends.";
+    return <article className="review-card" key={issue.farm_id}><div className="review-heading"><div><span className="pending-badge">{statusLabel}</span><h2>{issue.farm_name}</h2><p>{issue.contact_email}</p></div></div><p className="review-note">{note}</p><div className="review-actions"><button className="approve-button" type="button" disabled={invitationSent || workingId === issue.submission_id} onClick={() => void repair(issue)}>{workingId === issue.submission_id ? "Repairing…" : invitationSent ? "Awaiting owner" : "Repair owner access"}</button></div></article>;
   })}</section>;
 }
