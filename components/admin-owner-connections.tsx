@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
 
-type Issue = { submission_id: string; farm_id: string; farm_name: string; contact_email: string; account_exists: boolean; email_confirmed: boolean };
+type Issue = { submission_id: string; farm_id: string; farm_name: string; contact_email: string; account_exists: boolean; email_confirmed: boolean; invitation_sent_at: string | null };
 
 export function AdminOwnerConnections() {
   const [issues, setIssues] = useState<Issue[]>([]);
@@ -31,13 +31,18 @@ export function AdminOwnerConnections() {
     setWorkingId(issue.submission_id); setError(""); setMessage("");
     try {
       const response = await fetch("/api/admin-owner-connections", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token ?? ""}` }, body: JSON.stringify({ submissionId: issue.submission_id }) });
-      const result = await response.json() as { error?: string; invitation_sent?: boolean; farm_name?: string };
+      const result = await response.json() as { error?: string; invitation_sent?: boolean; invitation_already_sent?: boolean; invitation_sent_at?: string | null; farm_name?: string };
       if (!response.ok) throw new Error(result.error ?? "Owner access could not be repaired.");
-      setMessage(`${result.farm_name ?? issue.farm_name} is now owner managed.${result.invitation_sent ? " An access invitation was emailed to the farmer." : " Their existing account was connected."}`);
+      setMessage(result.invitation_already_sent
+        ? `${result.farm_name ?? issue.farm_name} already received an invitation. Another email was not sent.`
+        : `${result.farm_name ?? issue.farm_name} is now owner managed.${result.invitation_sent ? " An access invitation was emailed to the farmer." : " Their existing account was connected."}`);
       await load();
     } catch (repairError) { setError(repairError instanceof Error ? repairError.message : "Owner access could not be repaired."); }
     finally { setWorkingId(null); }
   }
   if (!loading && issues.length === 0 && !message && !error) return null;
-  return <section className="admin-analytics owner-connection-audit"><div className="admin-analytics-heading"><div><p className="eyebrow">Owner access check</p><h2>Approved owners missing access</h2><p>Repair the account connection without creating another listing or asking the farmer to resubmit.</p></div><button type="button" onClick={() => void load()} disabled={loading}>{loading ? "Checking…" : "Check again"}</button></div>{error && <p className="form-error admin-error">{error}</p>}{message && <p className="form-success portal-message">{message}</p>}{issues.map((issue) => <article className="review-card" key={issue.farm_id}><div className="review-heading"><div><span className="pending-badge">Connection missing</span><h2>{issue.farm_name}</h2><p>{issue.contact_email}</p></div></div><p className="review-note">{issue.account_exists ? issue.email_confirmed ? "A confirmed account exists and can be connected." : "An invited account exists and can be connected." : "No account exists yet; repairing will send an invitation."}</p><div className="review-actions"><button className="approve-button" type="button" disabled={workingId === issue.submission_id} onClick={() => void repair(issue)}>{workingId === issue.submission_id ? "Repairing…" : "Repair owner access"}</button></div></article>)}</section>;
+  return <section className="admin-analytics owner-connection-audit"><div className="admin-analytics-heading"><div><p className="eyebrow">Owner access check</p><h2>Approved owners missing access</h2><p>Repair the account connection without creating another listing or asking the farmer to resubmit.</p></div><button type="button" onClick={() => void load()} disabled={loading}>{loading ? "Checking…" : "Check again"}</button></div>{error && <p className="form-error admin-error">{error}</p>}{message && <p className="form-success portal-message">{message}</p>}{issues.map((issue) => {
+    const recentlySent = Boolean(issue.invitation_sent_at && Date.now() - Date.parse(issue.invitation_sent_at) < 24 * 60 * 60 * 1000);
+    return <article className="review-card" key={issue.farm_id}><div className="review-heading"><div><span className="pending-badge">{recentlySent ? "Invitation sent" : "Connection missing"}</span><h2>{issue.farm_name}</h2><p>{issue.contact_email}</p></div></div><p className="review-note">{recentlySent ? "Invitation sent—awaiting owner activation. Another email can be sent after 24 hours." : issue.account_exists ? issue.email_confirmed ? "A confirmed account exists and can be connected." : "An invited account exists and can be connected." : "No account exists yet; repairing will send an invitation."}</p><div className="review-actions"><button className="approve-button" type="button" disabled={recentlySent || workingId === issue.submission_id} onClick={() => void repair(issue)}>{workingId === issue.submission_id ? "Repairing…" : recentlySent ? "Awaiting owner" : "Repair owner access"}</button></div></article>;
+  })}</section>;
 }

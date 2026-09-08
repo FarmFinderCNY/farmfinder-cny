@@ -12,6 +12,12 @@ type Farm = {
   state: string | null; zip_code: string | null; owner_user_id: string | null;
 };
 
+const INVITATION_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+const invitationSentAt = (user: { user_metadata?: Record<string, unknown> } | undefined) => {
+  const value = user?.user_metadata?.owner_access_invitation_sent_at;
+  return typeof value === "string" && !Number.isNaN(Date.parse(value)) ? value : null;
+};
+
 const normalize = (value: string | null | undefined) => (value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
 const matchesSubmission = (farm: Farm, submission: OwnerSubmission) =>
   normalize(farm.name) === normalize(submission.farm_name) &&
@@ -55,7 +61,7 @@ export async function GET(request: Request) {
     seenFarmIds.add(farm.id);
     const user = (farm.owner_user_id ? usersById.get(farm.owner_user_id) : undefined) ?? usersByEmail.get(submission.contact_email.trim().toLowerCase());
     if (farm.owner_user_id && user?.email_confirmed_at) return [];
-    return [{ submission_id: submission.id, farm_id: farm.id, farm_name: farm.name, contact_email: submission.contact_email, account_exists: Boolean(user), email_confirmed: Boolean(user?.email_confirmed_at) }];
+    return [{ submission_id: submission.id, farm_id: farm.id, farm_name: farm.name, contact_email: submission.contact_email, account_exists: Boolean(user), email_confirmed: Boolean(user?.email_confirmed_at), invitation_sent_at: invitationSentAt(user) }];
   });
   return NextResponse.json({ issues });
 }
@@ -77,6 +83,10 @@ export async function POST(request: Request) {
   if (usersError) return NextResponse.json({ error: "The owner account could not be checked." }, { status: 502 });
   let owner = (farm.owner_user_id ? users.find((user) => user.id === farm.owner_user_id) : undefined) ?? users.find((user) => user.email?.trim().toLowerCase() === email);
   if (farm.owner_user_id && owner?.email_confirmed_at) return NextResponse.json({ connected: true, already_connected: true, farm_name: farm.name });
+  const lastInvitationAt = invitationSentAt(owner);
+  if (lastInvitationAt && Date.now() - Date.parse(lastInvitationAt) < INVITATION_COOLDOWN_MS) {
+    return NextResponse.json({ connected: true, invitation_already_sent: true, invitation_sent_at: lastInvitationAt, farm_name: farm.name });
+  }
   let invitationSent = false;
   if (!owner || !owner.email_confirmed_at) {
     const invitation = await createAndSendOwnerInvitation({ serviceClient, email, farmName: farm.name, resendKey, existingUser: owner });
@@ -90,5 +100,5 @@ export async function POST(request: Request) {
   const update = serviceClient.from("farm_stands").update({ owner_user_id: owner.id, is_verified: true }).eq("id", farm.id);
   const { error: updateError } = farm.owner_user_id ? await update.eq("owner_user_id", farm.owner_user_id) : await update.is("owner_user_id", null);
   if (updateError) return NextResponse.json({ error: "The existing listing could not be connected." }, { status: 500 });
-  return NextResponse.json({ connected: true, invitation_sent: invitationSent, farm_name: farm.name });
+  return NextResponse.json({ connected: true, invitation_sent: invitationSent, invitation_sent_at: invitationSent ? invitationSentAt(owner) : null, farm_name: farm.name });
 }

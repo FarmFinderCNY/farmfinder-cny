@@ -20,7 +20,7 @@ export async function createAndSendOwnerInvitation({
   farmName: string;
   resendKey: string;
   existingUser?: User;
-}): Promise<{ user: User; invitationSent: true } | { error: string; detail?: string }> {
+}): Promise<{ user: User; invitationSent: true; invitationSentAt: string } | { error: string; detail?: string }> {
   // Generate the secure Supabase link without using Supabase's rate-limited email sender.
   const { data, error } = await serviceClient.auth.admin.generateLink({
     type: existingUser ? "magiclink" : "invite",
@@ -50,5 +50,10 @@ export async function createAndSendOwnerInvitation({
   if (!emailResponse.ok) {
     return { error: "The owner access email could not be sent.", detail: `${emailResponse.status}: ${await emailResponse.text()}` };
   }
-  return { user: data.user, invitationSent: true };
+  const invitationSentAt = new Date().toISOString();
+  const { data: updatedUser, error: metadataError } = await serviceClient.auth.admin.updateUserById(data.user.id, {
+    user_metadata: { ...data.user.user_metadata, owner_access_invitation_sent_at: invitationSentAt },
+  });
+  if (metadataError) console.error("Owner invitation timestamp could not be saved:", metadataError.message);
+  return { user: updatedUser.user ?? data.user, invitationSent: true, invitationSentAt };
 }
