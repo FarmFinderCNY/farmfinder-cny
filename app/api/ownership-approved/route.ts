@@ -2,9 +2,17 @@ import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 function escapeHtml(value: string) {
-  return value.replace(/[&<>'"]/g, (character) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",
-  })[character] ?? character);
+  return value.replace(
+    /[&<>'"]/g,
+    (character) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#39;",
+        '"': "&quot;",
+      })[character] ?? character,
+  );
 }
 
 export async function POST(request: Request) {
@@ -15,50 +23,104 @@ export async function POST(request: Request) {
   const authorization = request.headers.get("authorization");
 
   if (!supabaseUrl || !publishableKey || !serviceRoleKey || !resendKey) {
-    return NextResponse.json({ error: "Approval email delivery is not configured." }, { status: 503 });
+    return NextResponse.json(
+      { error: "Approval email delivery is not configured." },
+      { status: 503 },
+    );
   }
   if (!authorization?.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Authentication required." },
+      { status: 401 },
+    );
   }
 
   let claimId = "";
   try {
-    const body = await request.json() as { claimId?: unknown };
+    const body = (await request.json()) as { claimId?: unknown };
     claimId = typeof body.claimId === "string" ? body.claimId : "";
   } catch {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
-  if (!claimId) return NextResponse.json({ error: "Claim is required." }, { status: 400 });
+  if (!claimId)
+    return NextResponse.json({ error: "Claim is required." }, { status: 400 });
 
   const accessToken = authorization.slice("Bearer ".length);
   const userClient = createClient(supabaseUrl, publishableKey, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { headers: { Authorization: authorization } },
   });
-  const { data: userData, error: userError } = await userClient.auth.getUser(accessToken);
+  const { data: userData, error: userError } =
+    await userClient.auth.getUser(accessToken);
   if (userError || !userData.user) {
-    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Authentication required." },
+      { status: 401 },
+    );
   }
-  const { data: admin } = await userClient.from("admin_users").select("user_id").eq("user_id", userData.user.id).maybeSingle();
-  if (!admin) return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
+  const { data: admin } = await userClient
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", userData.user.id)
+    .maybeSingle();
+  if (!admin)
+    return NextResponse.json(
+      { error: "Administrator access required." },
+      { status: 403 },
+    );
 
   const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const { data: claim } = await serviceClient
     .from("farm_claim_requests")
-    .select("id,farm_id,status,requested_by,claimant_name,claimant_email,farm_stands(name)")
+    .select(
+      "id,farm_id,status,requested_by,claimant_name,claimant_email,farm_stands(name)",
+    )
     .eq("id", claimId)
     .maybeSingle();
 
-  const farmRelation = claim?.farm_stands as unknown as { name?: string } | Array<{ name?: string }> | null;
-  const farmName = Array.isArray(farmRelation) ? farmRelation[0]?.name : farmRelation?.name;
-  if (!claim || claim.status !== "approved" || !claim.requested_by || !farmName) {
-    return NextResponse.json({ error: "Approved ownership information was not found." }, { status: 409 });
+  const farmRelation = claim?.farm_stands as unknown as
+    { name?: string } | Array<{ name?: string }> | null;
+  const farmName = Array.isArray(farmRelation)
+    ? farmRelation[0]?.name
+    : farmRelation?.name;
+  if (
+    !claim ||
+    claim.status !== "approved" ||
+    !claim.requested_by ||
+    !farmName
+  ) {
+    return NextResponse.json(
+      { error: "Approved ownership information was not found." },
+      { status: 409 },
+    );
   }
-  const { data: claimantAccount, error: claimantError } = await serviceClient.auth.admin.getUserById(claim.requested_by);
+  const { data: claimantAccount, error: claimantError } =
+    await serviceClient.auth.admin.getUserById(claim.requested_by);
   const claimantEmail = claimantAccount.user?.email?.trim().toLowerCase();
-  if (claimantError || !claimantEmail) return NextResponse.json({ error: "The approved owner account email could not be found." }, { status: 409 });
+  if (claimantError || !claimantEmail)
+    return NextResponse.json(
+      { error: "The approved owner account email could not be found." },
+      { status: 409 },
+    );
+
+  const { error: activationError } = await serviceClient
+    .from("farm_stands")
+    .update({
+      owner_user_id: claim.requested_by,
+      owner_access_activated_at:
+        claimantAccount.user?.email_confirmed_at ?? new Date().toISOString(),
+      is_verified: true,
+    })
+    .eq("id", claim.farm_id)
+    .eq("owner_user_id", claim.requested_by);
+  if (activationError) {
+    return NextResponse.json(
+      { error: "Ownership was approved, but activation could not be recorded." },
+      { status: 500 },
+    );
+  }
 
   const safeFarmName = escapeHtml(farmName);
   const safeName = escapeHtml(claim.claimant_name?.trim() || "there");
@@ -78,8 +140,18 @@ export async function POST(request: Request) {
   });
 
   if (!emailResponse.ok) {
-    console.error("Ownership approval email failed:", emailResponse.status, await emailResponse.text());
-    return NextResponse.json({ error: "Ownership was approved, but the welcome email could not be sent." }, { status: 502 });
+    console.error(
+      "Ownership approval email failed:",
+      emailResponse.status,
+      await emailResponse.text(),
+    );
+    return NextResponse.json(
+      {
+        error:
+          "Ownership was approved, but the welcome email could not be sent.",
+      },
+      { status: 502 },
+    );
   }
 
   return NextResponse.json({ sent: true });

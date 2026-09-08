@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
 import { recordFarmEvent } from "@/components/farm-engagement-tracker";
 
 export default function FollowFarmForm({ farmId, farmName }: { farmId: string; farmName: string }) {
@@ -17,32 +16,13 @@ export default function FollowFarmForm({ farmId, farmName }: { farmId: string; f
     setSaving(true);
     setMessage("");
 
-    const normalizedEmail = email.trim().toLowerCase();
-    const supabase = getBrowserSupabaseClient();
+    const response = await fetch("/api/inventory-alerts/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ farmId, productName: "__farm_updates__", email }),
+    });
 
-    const { data: existing } = await supabase
-      .from("inventory_alert_subscriptions")
-      .select("id,active")
-      .eq("farm_id", farmId)
-      .eq("product_name", "__farm_updates__")
-      .eq("email", normalizedEmail)
-      .maybeSingle();
-
-    let error = null;
-    if (existing?.id) {
-      const result = await supabase
-        .from("inventory_alert_subscriptions")
-        .update({ active: true })
-        .eq("id", existing.id);
-      error = result.error;
-    } else {
-      const result = await supabase
-        .from("inventory_alert_subscriptions")
-        .insert({ farm_id: farmId, product_name: "__farm_updates__", email: normalizedEmail, active: true });
-      error = result.error;
-    }
-
-    if (error) {
+    if (!response.ok) {
       setMessage("We couldn’t follow this farm right now. Please try again.");
       setSaving(false);
       return;

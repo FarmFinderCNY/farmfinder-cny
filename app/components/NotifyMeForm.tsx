@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
 import { recordFarmEvent } from "@/components/farm-engagement-tracker";
 export default function NotifyMeForm({ farmId }: { farmId: string }) {
   const [showForm, setShowForm] = useState(false);
@@ -17,18 +16,13 @@ export default function NotifyMeForm({ farmId }: { farmId: string }) {
     setSaving(true);
     setMessage("");
 
-    const supabase = getBrowserSupabaseClient();
+    const response = await fetch("/api/inventory-alerts/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ farmId, productName: alertType === "farm" ? "__farm_updates__" : productName, email }),
+    });
 
-    const { error } = await supabase
-      .from("inventory_alert_subscriptions")
-      .insert({
-        farm_id: farmId,
-        product_name: alertType === "farm" ? "__farm_updates__" : productName.trim(),
-        email: email.trim().toLowerCase(),
-        active: true,
-      });
-
-    if (error) {
+    if (!response.ok) {
       setMessage("We couldn’t create your alert. Please try again.");
       setSaving(false);
       return;
