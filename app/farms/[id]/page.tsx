@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getActiveFarmStand } from "@/lib/supabase";
 import NotifyMeForm from "@/app/components/NotifyMeForm";
+import UberDeliveryQuote from "@/app/components/UberDeliveryQuote";
 import { getGrowingPracticeLabel } from "@/lib/growing-practices";
 import { FarmEngagementTracker } from "@/components/farm-engagement-tracker";
 export const dynamic = "force-dynamic";
@@ -43,7 +44,7 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
       </>}
 
       <dl className="farm-facts">{stand.hours && <><dt>{isMarket ? "Market hours" : "Hours"}</dt><dd>{stand.hours}</dd></>}{stand.payment_methods && <><dt>Payment</dt><dd>{stand.payment_methods}</dd></>}{stand.phone && <><dt>Phone</dt><dd><a href={`tel:${stand.phone}`}>{stand.phone}</a></dd></>}</dl>
-      <div className="detail-actions"><a className="primary-button" href={directions} data-farm-event="directions_click" target="_blank" rel="noreferrer">Get directions <span>↗</span></a>{website && <a className="text-button" href={website} data-farm-event="website_click" target="_blank" rel="noreferrer">Visit website ↗</a>}{!stand.owner_user_id && !stand.is_verified && <Link className="text-button" href={`/farms/${stand.id}/claim`}>🌾 Manage this {isMarket ? "market" : "farm"}? Connect account</Link>}{!isMarket && <NotifyMeForm farmId={stand.id} />}</div>
+      <div className="detail-actions"><a className="primary-button" href={directions} data-farm-event="directions_click" target="_blank" rel="noreferrer">Get directions <span>↗</span></a>{website && <a className="text-button" href={website} data-farm-event="website_click" target="_blank" rel="noreferrer">Visit website ↗</a>}{!stand.owner_user_id && !stand.is_verified && <Link className="text-button" href={`/farms/${stand.id}/claim`}>🌾 Manage this {isMarket ? "market" : "farm"}? Connect account</Link>}{!isMarket && <NotifyMeForm farmId={stand.id} />}{!isMarket && stand.address && stand.city && stand.state && stand.zip_code && <UberDeliveryQuote pickup={{ street: stand.address, city: stand.city, state: stand.state, zip: stand.zip_code }} />}</div>
     </div>{stand.photo_url ? <div className="farm-detail-visual has-photo"><img src={stand.photo_url} alt={isMarket ? `${stand.name} farmers market` : `${stand.name} farm`} /></div> : <div className="farm-detail-visual"><span>{isMarket ? "Local vendors. One community market." : "Grown in Central New York"}</span></div>}</article>
     <footer className="footer shell"><Link className="brand" href="/"><span>FF</span> FarmFinder <b>CNY</b></Link><p>Helping Central New York find food grown closer to home.</p></footer>
   </main>;
