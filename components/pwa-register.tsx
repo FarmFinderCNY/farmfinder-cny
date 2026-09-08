@@ -20,9 +20,9 @@ export function PwaRegister() {
 
     const installed = window.matchMedia("(display-mode: standalone)").matches;
     setAlreadyInstalled(installed);
-    const wasDismissed = window.localStorage.getItem("farmfinder-install-dismissed") === "true";
     const initializeBanner = window.setTimeout(() => {
-      setDismissed(installed || wasDismissed);
+      // Keep the install choice available without covering a visitor's first view.
+      setDismissed(true);
     }, 0);
 
     const onInstallPrompt = (event: Event) => {

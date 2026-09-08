@@ -46,9 +46,8 @@ export async function POST(request: Request) {
   for (const submission of approvedForUser) {
     const { data: farms, error: farmError } = await serviceClient
       .from("farm_stands")
-      .select("id,name,address,city,state,zip_code")
+      .select("id,owner_user_id,name,address,city,state,zip_code")
       .eq("is_active", true)
-      .is("owner_user_id", null)
       .order("created_at", { ascending: false })
       .limit(500);
 
@@ -57,13 +56,13 @@ export async function POST(request: Request) {
       continue;
     }
     const farm = farms?.find((candidate) => listingsMatch(candidate, submission));
-    if (!farm) continue;
+    if (!farm || (farm.owner_user_id && farm.owner_user_id !== user.id)) continue;
 
     const { error: updateError } = await serviceClient
       .from("farm_stands")
-      .update({ owner_user_id: user.id, is_verified: true })
+      .update({ owner_user_id: user.id, owner_access_activated_at: new Date().toISOString(), is_verified: true })
       .eq("id", farm.id)
-      .is("owner_user_id", null);
+      .or(`owner_user_id.is.null,owner_user_id.eq.${user.id}`);
     if (!updateError) connected += 1;
   }
 
