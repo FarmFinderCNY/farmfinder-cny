@@ -2,7 +2,7 @@ import type { FarmStand } from "@/lib/types";
 
 export type ListingType = NonNullable<FarmStand["listing_type"]>;
 
-const FARMERS_MARKET_NAME = /\b(?:farmers?|farmer['’]s)\s+market\b/i;
+const FARMERS_MARKET_NAME = /\bfarmer(?:s['’]?|['’]s)?\s+market\b/i;
 
 export function resolveListingType(name: string, listingType?: string | null): ListingType {
   if (listingType === "farmers_market" || FARMERS_MARKET_NAME.test(name)) {

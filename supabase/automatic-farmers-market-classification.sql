@@ -7,7 +7,7 @@ language plpgsql
 set search_path = public
 as $$
 begin
-  if new.name ~* '\\m(farmers?|farmer''s)\\s+market\\M' then
+  if new.name ~* '\\mfarmer(s[''’]?|[''’]s)?\\s+market\\M' then
     new.listing_type := 'farmers_market';
   end if;
 
@@ -23,7 +23,7 @@ for each row execute function public.classify_farmers_market_listing();
 -- Repair Cooperstown and any other existing market that kept the old default.
 update public.farm_stands
 set listing_type = 'farmers_market'
-where name ~* '\\m(farmers?|farmer''s)\\s+market\\M'
+where name ~* '\\mfarmer(s[''’]?|[''’]s)?\\s+market\\M'
   and listing_type <> 'farmers_market';
 
 comment on function public.classify_farmers_market_listing() is
