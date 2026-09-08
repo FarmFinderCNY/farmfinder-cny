@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { FarmStand, MarketVendor } from "@/lib/types";
+import { resolveListingType } from "@/lib/listing-type";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -15,15 +16,15 @@ async function addMarketData(client: ReturnType<typeof getSupabaseClient>, farms
   if (farms.length === 0) return farms;
   const ids = farms.map((farm) => farm.id);
   const typeResult = await client.from("farm_stands").select("id,listing_type").in("id", ids);
-  if (typeResult.error) return farms.map((farm) => ({ ...farm, listing_type: "farm_stand" as const }));
+  if (typeResult.error) return farms.map((farm) => ({ ...farm, listing_type: resolveListingType(farm.name) }));
   const types = new Map((typeResult.data ?? []).map((row) => [row.id, row.listing_type]));
-  const marketIds = (typeResult.data ?? []).filter((row) => row.listing_type === "farmers_market").map((row) => row.id);
+  const marketIds = farms.filter((farm) => resolveListingType(farm.name, types.get(farm.id)) === "farmers_market").map((farm) => farm.id);
   let vendors: MarketVendor[] = [];
   if (marketIds.length > 0) {
     const vendorResult = await client.from("market_vendors").select("id,market_id,vendor_name,linked_farm_id,is_attending,display_order,note,updated_at,created_at").in("market_id", marketIds).eq("is_attending", true).order("display_order", { ascending: true }).order("vendor_name", { ascending: true });
     if (!vendorResult.error) vendors = (vendorResult.data ?? []) as MarketVendor[];
   }
-  return farms.map((farm) => ({ ...farm, listing_type: (types.get(farm.id) === "farmers_market" ? "farmers_market" : "farm_stand"), market_vendors: vendors.filter((vendor) => vendor.market_id === farm.id) }));
+  return farms.map((farm) => ({ ...farm, listing_type: resolveListingType(farm.name, types.get(farm.id)), market_vendors: vendors.filter((vendor) => vendor.market_id === farm.id) }));
 }
 
 export async function getActiveFarmStands(): Promise<FarmStand[]> {

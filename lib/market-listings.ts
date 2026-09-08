@@ -1,5 +1,6 @@
 import type { FarmStand, MarketVendor } from "@/lib/types";
 import { getSupabaseClient, hasSupabaseConfig } from "@/lib/supabase";
+import { resolveListingType } from "@/lib/listing-type";
 
 export async function enrichWithMarketData(stands: FarmStand[]): Promise<FarmStand[]> {
   if (!hasSupabaseConfig() || stands.length === 0) return stands;
@@ -8,11 +9,11 @@ export async function enrichWithMarketData(stands: FarmStand[]): Promise<FarmSta
   const typeResult = await client.from("farm_stands").select("id,listing_type").in("id", ids);
 
   // Before the migration is run, preserve the existing site behavior.
-  if (typeResult.error) return stands.map((stand) => ({ ...stand, listing_type: "farm_stand" }));
+  if (typeResult.error) return stands.map((stand) => ({ ...stand, listing_type: resolveListingType(stand.name) }));
 
   const typeById = new Map((typeResult.data ?? []).map((row) => [row.id, row.listing_type]));
-  const marketIds = ids.filter((id) => typeById.get(id) === "farmers_market");
-  if (marketIds.length === 0) return stands.map((stand) => ({ ...stand, listing_type: "farm_stand" }));
+  const marketIds = stands.filter((stand) => resolveListingType(stand.name, typeById.get(stand.id)) === "farmers_market").map((stand) => stand.id);
+  if (marketIds.length === 0) return stands.map((stand) => ({ ...stand, listing_type: resolveListingType(stand.name, typeById.get(stand.id)) }));
 
   const vendorsResult = await client
     .from("market_vendors")
@@ -33,7 +34,7 @@ export async function enrichWithMarketData(stands: FarmStand[]): Promise<FarmSta
 
   return stands.map((stand) => ({
     ...stand,
-    listing_type: typeById.get(stand.id) === "farmers_market" ? "farmers_market" : "farm_stand",
+    listing_type: resolveListingType(stand.name, typeById.get(stand.id)),
     market_vendors: vendorsByMarket.get(stand.id) ?? [],
   }));
 }
