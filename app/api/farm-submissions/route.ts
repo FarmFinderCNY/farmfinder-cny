@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseClient } from "@/lib/supabase";
+import { listingsMatch } from "@/lib/listing-match";
 
 type SubmissionPayload = {
   submission_type?: unknown;
@@ -47,10 +48,6 @@ function escapeHtml(value: string) {
   })[character] ?? character);
 }
 
-function normalizeListingText(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
 export async function POST(request: Request) {
   let body: SubmissionPayload;
   try {
@@ -96,22 +93,18 @@ export async function POST(request: Request) {
   }
 
   const supabase = getSupabaseClient();
-  const { data: existingListings, error: existingListingsError } = await supabase
-    .from("farm_stands")
-    .select("id,name,address,city,state,zip_code")
-    .eq("is_active", true);
+  const [{ data: existingListings, error: existingListingsError }, { data: pendingSubmissions, error: pendingError }] = await Promise.all([
+    supabase.from("farm_stands").select("id,name,address,city,state,zip_code").eq("is_active", true),
+    supabase.from("farm_stand_submissions").select("id,farm_name,address,city,state,zip_code").eq("status", "pending"),
+  ]);
 
-  if (existingListingsError) {
-    console.error("Duplicate listing check failed:", existingListingsError.message);
+  if (existingListingsError || pendingError) {
+    console.error("Duplicate listing check failed:", existingListingsError?.message ?? pendingError?.message);
     return NextResponse.json({ error: "Unable to check existing listings right now." }, { status: 503 });
   }
 
-  const duplicate = (existingListings ?? []).find((listing) =>
-    normalizeListingText(listing.name ?? "") === normalizeListingText(farmName) &&
-    normalizeListingText(listing.address ?? "") === normalizeListingText(address) &&
-    normalizeListingText(listing.city ?? "") === normalizeListingText(city) &&
-    normalizeListingText(listing.state ?? "") === normalizeListingText(state),
-  );
+  const candidate = { farm_name: farmName, address, city, state, zip_code: zipCode };
+  const duplicate = (existingListings ?? []).find((listing) => listingsMatch(listing, candidate));
 
   if (duplicate) {
     return NextResponse.json({
@@ -119,6 +112,13 @@ export async function POST(request: Request) {
       code: "duplicate_listing",
       existing_farm_id: duplicate.id,
       existing_farm_name: duplicate.name,
+    }, { status: 409 });
+  }
+
+  if ((pendingSubmissions ?? []).some((submission) => listingsMatch(submission, candidate))) {
+    return NextResponse.json({
+      error: "This farm already has a submission waiting for review. Please do not submit it again.",
+      code: "duplicate_submission",
     }, { status: 409 });
   }
 

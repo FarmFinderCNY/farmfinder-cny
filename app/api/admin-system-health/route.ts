@@ -41,7 +41,7 @@ export async function GET(request: Request) {
     : { key: "email", label: "Email delivery configuration", status: "error", detail: "RESEND_API_KEY is missing." });
 
   const activeFarms = (farms.data ?? []).filter((farm) => farm.is_active);
-  const missingCoordinates = activeFarms.filter((farm) => !Number.isFinite(Number(farm.latitude)) || !Number.isFinite(Number(farm.longitude)));
+  const missingCoordinates = activeFarms.filter((farm) => farm.latitude === null || farm.longitude === null || !Number.isFinite(Number(farm.latitude)) || !Number.isFinite(Number(farm.longitude)));
   checks.push(missingCoordinates.length
     ? { key: "coordinates", label: "Active farm map locations", status: "warning", detail: `${missingCoordinates.length} active farm${missingCoordinates.length === 1 ? " is" : "s are"} missing valid coordinates.` }
     : { key: "coordinates", label: "Active farm map locations", status: "healthy", detail: "Every active farm has valid map coordinates." });
