@@ -7,6 +7,8 @@ type ApprovalBody = {
   longitude?: unknown;
 };
 
+const normalize = (value: string | null | undefined) => (value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
 export async function POST(request: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -63,19 +65,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "The approved owner submission could not be found." }, { status: 409 });
   }
 
-  const { data: farm, error: farmError } = await serviceClient
+  const { data: farms, error: farmError } = await serviceClient
     .from("farm_stands")
-    .select("id,owner_user_id")
-    .eq("name", submission.farm_name)
-    .eq("address", submission.address)
-    .eq("city", submission.city)
-    .eq("state", submission.state)
-    .eq("zip_code", submission.zip_code)
-    .eq("latitude", latitude)
-    .eq("longitude", longitude)
+    .select("id,owner_user_id,name,address,city,state,zip_code")
+    .eq("is_active", true)
     .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(500);
+
+  const farm = (farms ?? []).find((candidate) =>
+    normalize(candidate.name) === normalize(submission.farm_name) &&
+    normalize(candidate.address) === normalize(submission.address) &&
+    normalize(candidate.city) === normalize(submission.city) &&
+    normalize(candidate.state) === normalize(submission.state) &&
+    normalize(candidate.zip_code) === normalize(submission.zip_code),
+  );
 
   if (farmError || !farm) {
     return NextResponse.json({ error: "The farm was published, but its new listing could not be located to connect the owner." }, { status: 409 });
