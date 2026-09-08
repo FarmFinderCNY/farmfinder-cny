@@ -47,6 +47,10 @@ function escapeHtml(value: string) {
   })[character] ?? character);
 }
 
+function normalizeListingText(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 export async function POST(request: Request) {
   let body: SubmissionPayload;
   try {
@@ -91,7 +95,34 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Please check the form fields." }, { status: 400 });
   }
 
-  const { error } = await getSupabaseClient().from("farm_stand_submissions").insert({
+  const supabase = getSupabaseClient();
+  const { data: existingListings, error: existingListingsError } = await supabase
+    .from("farm_stands")
+    .select("id,name,address,city,state,zip_code")
+    .eq("is_active", true);
+
+  if (existingListingsError) {
+    console.error("Duplicate listing check failed:", existingListingsError.message);
+    return NextResponse.json({ error: "Unable to check existing listings right now." }, { status: 503 });
+  }
+
+  const duplicate = (existingListings ?? []).find((listing) =>
+    normalizeListingText(listing.name ?? "") === normalizeListingText(farmName) &&
+    normalizeListingText(listing.address ?? "") === normalizeListingText(address) &&
+    normalizeListingText(listing.city ?? "") === normalizeListingText(city) &&
+    normalizeListingText(listing.state ?? "") === normalizeListingText(state),
+  );
+
+  if (duplicate) {
+    return NextResponse.json({
+      error: "This farm is already listed. View the existing listing or use the Farmer Portal instead of submitting it again.",
+      code: "duplicate_listing",
+      existing_farm_id: duplicate.id,
+      existing_farm_name: duplicate.name,
+    }, { status: 409 });
+  }
+
+  const { error } = await supabase.from("farm_stand_submissions").insert({
     submission_type: submissionType,
     farm_name: farmName,
     address,
