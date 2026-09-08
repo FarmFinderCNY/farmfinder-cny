@@ -3,6 +3,7 @@
 import type { FarmStand } from "@/lib/types";
 import Link from "next/link";
 import { getGrowingPracticeCardBadge } from "@/lib/growing-practices";
+import { getMarketLabel } from "@/lib/listing-type";
 import { recordAnalyticsEvent } from "@/components/analytics-tracker";
 type InventoryItem = FarmStand["inventory"][number];
 export function StandCard({ stand, distanceMiles = null, matchingProducts = [], listedProductMatch = false, searchLabel = "" }: { stand: FarmStand; distanceMiles?: number | null; matchingProducts?: InventoryItem[]; listedProductMatch?: boolean; searchLabel?: string; }) {
@@ -15,7 +16,7 @@ export function StandCard({ stand, distanceMiles = null, matchingProducts = [], 
   const practiceBadge = !isMarket ? getGrowingPracticeCardBadge(stand.growing_practices ?? [], stand.organic_certifier) : null;
   return <article className={`stand-card ${stand.owner_user_id ? "owner-managed-card" : ""}`}>
     {stand.photo_url && <img className="stand-photo" src={stand.photo_url} alt={isMarket ? `${stand.name} farmers market` : `${stand.name} farm`} />}
-    <div className="card-topline"><span className="status"><i /> Active listing</span><div className="verification-badges">{isMarket && <span className="verified">🧺 Farmers Market</span>}{stand.owner_user_id ? <span className="owner-managed">✓ Owner Managed</span> : stand.is_verified ? <span className="verified">✓ Listing verified</span> : null}</div></div>
+    <div className="card-topline"><span className="status"><i /> Active listing</span><div className="verification-badges">{isMarket && <span className="verified">🧺 {getMarketLabel(stand.name)}</span>}{stand.owner_user_id ? <span className="owner-managed">✓ Owner Managed</span> : stand.is_verified ? <span className="verified">✓ Listing verified</span> : null}</div></div>
     <h3>{stand.name}</h3><p className="location">{[stand.city, stand.state].filter(Boolean).join(", ") || location || "Central New York"}{distanceMiles !== null && <strong className="distance"> · {distanceMiles < 10 ? distanceMiles.toFixed(1) : Math.round(distanceMiles)} miles away</strong>}</p>
     {stand.owner_user_id && <div className="owner-managed-explainer"><strong>✓ Updated by this farm</strong><span>Availability can be managed directly by the farm owner or operator.</span></div>}
     {isMarket ? <div className="inventory-summary"><strong>Vendors at this market</strong><span>{attendingVendors.length > 0 ? attendingVendors.slice(0, 3).map((vendor) => vendor.vendor_name).join(" · ") + (attendingVendors.length > 3 ? ` · +${attendingVendors.length - 3} more` : "") : "Vendor list coming soon"}</span></div> : <>
