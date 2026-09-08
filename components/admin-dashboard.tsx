@@ -125,30 +125,12 @@ const [coordinates, setCoordinates] = useState<Record<string, { latitude: string
     if (!confirmed) return;
     setWorkingId(id);
     setError("");
-    const functionName = decision === "approve" ? "approve_farm_submission" : "reject_farm_submission";
-    const rpcArguments = decision === "approve" ? { submission_id: id, farm_latitude: latitude, farm_longitude: longitude } : { submission_id: id };
     const supabase = getBrowserSupabaseClient();
-    const { error: reviewError } = await supabase.rpc(functionName, rpcArguments);
-    if (reviewError) {
-      setError(reviewError.message);
-    } else if (decision === "approve") {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const response = await fetch("/api/owner-submission-approved", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionData.session?.access_token ?? ""}`,
-        },
-        body: JSON.stringify({ submissionId: id, latitude, longitude }),
-      });
-      const result = await response.json() as { error?: string };
-      if (!response.ok) {
-        setError(result.error ?? "The farm was published, but owner access could not be connected automatically.");
-      }
-      await loadSubmissions();
-    } else {
-      await loadSubmissions();
-    }
+    const { data: sessionData } = await supabase.auth.getSession();
+    const response = await fetch("/api/admin-farm-submissions", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionData.session?.access_token ?? ""}` }, body: JSON.stringify({ submissionId: id, decision, latitude, longitude }) });
+    const result = await response.json() as { error?: string };
+    if (!response.ok) setError(result.error ?? "The review could not be completed.");
+    await loadSubmissions();
     setWorkingId(null);
   }
 

@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { createAndSendOwnerInvitation } from "@/lib/owner-access-invitation";
+import { listAllAuthUsers } from "@/lib/supabase-admin-users";
 
 type OwnerSubmission = {
   id: string; farm_name: string; address: string; city: string; state: string;
@@ -41,17 +42,19 @@ export async function GET(request: Request) {
   const [submissionResult, farmResult, userResult] = await Promise.all([
     serviceClient.from("farm_stand_submissions").select("id,farm_name,address,city,state,zip_code,contact_email,created_at").eq("submission_type", "owner").eq("status", "approved").order("created_at", { ascending: false }),
     serviceClient.from("farm_stands").select("id,name,address,city,state,zip_code,owner_user_id").eq("is_active", true),
-    serviceClient.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    listAllAuthUsers(serviceClient),
   ]);
   if (submissionResult.error || farmResult.error || userResult.error) return NextResponse.json({ error: "Unable to audit owner connections." }, { status: 500 });
   const farms = (farmResult.data ?? []) as Farm[];
-  const usersByEmail = new Map(userResult.data.users.map((user) => [user.email?.trim().toLowerCase(), user]));
+  const usersByEmail = new Map(userResult.users.map((user) => [user.email?.trim().toLowerCase(), user]));
+  const usersById = new Map(userResult.users.map((user) => [user.id, user]));
   const seenFarmIds = new Set<string>();
   const issues = ((submissionResult.data ?? []) as OwnerSubmission[]).flatMap((submission) => {
     const farm = farms.find((candidate) => matchesSubmission(candidate, submission));
-    if (!farm || farm.owner_user_id || seenFarmIds.has(farm.id)) return [];
+    if (!farm || seenFarmIds.has(farm.id)) return [];
     seenFarmIds.add(farm.id);
-    const user = usersByEmail.get(submission.contact_email.trim().toLowerCase());
+    const user = (farm.owner_user_id ? usersById.get(farm.owner_user_id) : undefined) ?? usersByEmail.get(submission.contact_email.trim().toLowerCase());
+    if (farm.owner_user_id && user?.email_confirmed_at) return [];
     return [{ submission_id: submission.id, farm_id: farm.id, farm_name: farm.name, contact_email: submission.contact_email, account_exists: Boolean(user), email_confirmed: Boolean(user?.email_confirmed_at) }];
   });
   return NextResponse.json({ issues });
@@ -69,14 +72,14 @@ export async function POST(request: Request) {
   const { data: farms, error: farmError } = await serviceClient.from("farm_stands").select("id,name,address,city,state,zip_code,owner_user_id").eq("is_active", true).order("created_at", { ascending: false });
   const farm = ((farms ?? []) as Farm[]).find((candidate) => matchesSubmission(candidate, submission as OwnerSubmission));
   if (farmError || !farm) return NextResponse.json({ error: "The existing farm listing could not be matched safely." }, { status: 409 });
-  if (farm.owner_user_id) return NextResponse.json({ connected: true, already_connected: true, farm_name: farm.name });
   const email = submission.contact_email.trim().toLowerCase();
-  const { data: usersData, error: usersError } = await serviceClient.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  const { users, error: usersError } = await listAllAuthUsers(serviceClient);
   if (usersError) return NextResponse.json({ error: "The owner account could not be checked." }, { status: 502 });
-  let owner = usersData.users.find((user) => user.email?.trim().toLowerCase() === email);
+  let owner = (farm.owner_user_id ? users.find((user) => user.id === farm.owner_user_id) : undefined) ?? users.find((user) => user.email?.trim().toLowerCase() === email);
+  if (farm.owner_user_id && owner?.email_confirmed_at) return NextResponse.json({ connected: true, already_connected: true, farm_name: farm.name });
   let invitationSent = false;
-  if (!owner) {
-    const invitation = await createAndSendOwnerInvitation({ serviceClient, email, farmName: farm.name, resendKey });
+  if (!owner || !owner.email_confirmed_at) {
+    const invitation = await createAndSendOwnerInvitation({ serviceClient, email, farmName: farm.name, resendKey, existingUser: owner });
     if ("error" in invitation) {
       console.error("Owner access invitation failed:", invitation.detail ?? invitation.error);
       return NextResponse.json({ error: invitation.error }, { status: 502 });
@@ -84,7 +87,8 @@ export async function POST(request: Request) {
     owner = invitation.user;
     invitationSent = invitation.invitationSent;
   }
-  const { error: updateError } = await serviceClient.from("farm_stands").update({ owner_user_id: owner.id, is_verified: true }).eq("id", farm.id).is("owner_user_id", null);
+  const update = serviceClient.from("farm_stands").update({ owner_user_id: owner.id, is_verified: true }).eq("id", farm.id);
+  const { error: updateError } = farm.owner_user_id ? await update.eq("owner_user_id", farm.owner_user_id) : await update.is("owner_user_id", null);
   if (updateError) return NextResponse.json({ error: "The existing listing could not be connected." }, { status: 500 });
   return NextResponse.json({ connected: true, invitation_sent: invitationSent, farm_name: farm.name });
 }

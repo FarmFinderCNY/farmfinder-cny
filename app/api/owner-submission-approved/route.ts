@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { createAndSendOwnerInvitation } from "@/lib/owner-access-invitation";
+import { listAllAuthUsers } from "@/lib/supabase-admin-users";
 
 type ApprovalBody = {
   submissionId?: unknown;
@@ -90,15 +91,15 @@ export async function POST(request: Request) {
   }
 
   const ownerEmail = submission.contact_email.trim().toLowerCase();
-  const { data: usersData, error: usersError } = await serviceClient.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  const { users, error: usersError } = await listAllAuthUsers(serviceClient);
   if (usersError) {
     return NextResponse.json({ error: "The farm was published, but the owner account could not be checked." }, { status: 502 });
   }
 
-  let ownerUser = usersData.users.find((user) => user.email?.toLowerCase() === ownerEmail);
+  let ownerUser = users.find((user) => user.email?.toLowerCase() === ownerEmail);
   let invitationSent = false;
-  if (!ownerUser) {
-    const invitation = await createAndSendOwnerInvitation({ serviceClient, email: ownerEmail, farmName: farm.name, resendKey });
+  if (!ownerUser || !ownerUser.email_confirmed_at) {
+    const invitation = await createAndSendOwnerInvitation({ serviceClient, email: ownerEmail, farmName: farm.name, resendKey, existingUser: ownerUser });
     if ("error" in invitation) {
       console.error("Owner access invitation failed:", invitation.detail ?? invitation.error);
       return NextResponse.json({ error: `The farm was published, but ${invitation.error.toLowerCase()}` }, { status: 502 });

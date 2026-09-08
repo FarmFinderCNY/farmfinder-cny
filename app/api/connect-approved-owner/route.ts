@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { listingsMatch } from "@/lib/listing-match";
 
 export async function POST(request: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -45,21 +46,17 @@ export async function POST(request: Request) {
   for (const submission of approvedForUser) {
     const { data: farms, error: farmError } = await serviceClient
       .from("farm_stands")
-      .select("id")
-      .eq("name", submission.farm_name)
-      .eq("address", submission.address)
-      .eq("city", submission.city)
-      .eq("state", submission.state)
-      .eq("zip_code", submission.zip_code)
+      .select("id,name,address,city,state,zip_code")
+      .eq("is_active", true)
       .is("owner_user_id", null)
       .order("created_at", { ascending: false })
-      .limit(1);
+      .limit(500);
 
     if (farmError) {
       console.error("Approved owner farm lookup failed:", farmError.message);
       continue;
     }
-    const farm = farms?.[0];
+    const farm = farms?.find((candidate) => listingsMatch(candidate, submission));
     if (!farm) continue;
 
     const { error: updateError } = await serviceClient
