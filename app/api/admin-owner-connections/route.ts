@@ -13,6 +13,8 @@ type Farm = {
   owner_access_activated_at: string | null; farmer_inventory_updated_at: string | null;
 };
 
+const INVITATION_RESEND_DELAY_MS = 24 * 60 * 60 * 1000;
+
 const invitationSentAt = (user: { user_metadata?: Record<string, unknown> } | undefined) => {
   const value = user?.user_metadata?.owner_access_invitation_sent_at;
   return typeof value === "string" && !Number.isNaN(Date.parse(value)) ? value : null;
@@ -80,7 +82,8 @@ export async function GET(request: Request) {
     seenFarmIds.add(farm.id);
     const user = (farm.owner_user_id ? usersById.get(farm.owner_user_id) : undefined) ?? usersByEmail.get(submission.contact_email.trim().toLowerCase());
     if (farm.owner_user_id && user?.email_confirmed_at) return [];
-    return [{ submission_id: submission.id, farm_id: farm.id, farm_name: farm.name, contact_email: submission.contact_email, account_exists: Boolean(user), email_confirmed: Boolean(user?.email_confirmed_at), invitation_sent_at: invitationSentAt(user), invitation_email_id: invitationEmailId(user) }];
+    const sentAt = invitationSentAt(user);
+    return [{ submission_id: submission.id, farm_id: farm.id, farm_name: farm.name, contact_email: submission.contact_email, account_exists: Boolean(user), email_confirmed: Boolean(user?.email_confirmed_at), invitation_sent_at: sentAt, invitation_email_id: invitationEmailId(user), resend_available_at: sentAt ? new Date(Date.parse(sentAt) + INVITATION_RESEND_DELAY_MS).toISOString() : null }];
   });
   const issues = await Promise.all(pendingIssues.map(async (issue) => ({
     ...issue,
@@ -94,8 +97,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const clients = await getAdminClients(request);
   if (!clients) return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
-  const body = await request.json().catch(() => null) as { submissionId?: unknown } | null;
+  const body = await request.json().catch(() => null) as { submissionId?: unknown; resend?: unknown } | null;
   const submissionId = typeof body?.submissionId === "string" ? body.submissionId : "";
+  const resend = body?.resend === true;
   if (!submissionId) return NextResponse.json({ error: "Submission is required." }, { status: 400 });
   const { serviceClient, resendKey } = clients;
   const { data: submission, error: submissionError } = await serviceClient.from("farm_stand_submissions").select("id,farm_name,address,city,state,zip_code,contact_email,created_at").eq("id", submissionId).eq("submission_type", "owner").eq("status", "approved").maybeSingle();
@@ -109,8 +113,11 @@ export async function POST(request: Request) {
   let owner = (farm.owner_user_id ? users.find((user) => user.id === farm.owner_user_id) : undefined) ?? users.find((user) => user.email?.trim().toLowerCase() === email);
   if (farm.owner_user_id && owner?.email_confirmed_at) return NextResponse.json({ connected: true, already_connected: true, farm_name: farm.name });
   const lastInvitationAt = invitationSentAt(owner);
-  if (lastInvitationAt) {
+  if (lastInvitationAt && !resend) {
     return NextResponse.json({ connected: true, invitation_already_sent: true, invitation_sent_at: lastInvitationAt, farm_name: farm.name });
+  }
+  if (lastInvitationAt && Date.now() - Date.parse(lastInvitationAt) < INVITATION_RESEND_DELAY_MS) {
+    return NextResponse.json({ error: "A replacement invitation can only be sent after the 24-hour safety window." }, { status: 429 });
   }
   let invitationSent = false;
   if (!owner || !owner.email_confirmed_at) {

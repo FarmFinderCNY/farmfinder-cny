@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
 
-type Issue = { submission_id: string; farm_id: string; farm_name: string; contact_email: string; account_exists: boolean; email_confirmed: boolean; invitation_sent_at: string | null; invitation_email_id: string | null; delivery_status: string | null };
+type Issue = { submission_id: string; farm_id: string; farm_name: string; contact_email: string; account_exists: boolean; email_confirmed: boolean; invitation_sent_at: string | null; invitation_email_id: string | null; delivery_status: string | null; resend_available_at: string | null };
 type OwnerSummary = { activated: number; awaiting_activation: number; updating_products: number; activated_without_updates: number };
 
 export function AdminOwnerConnections() {
@@ -28,12 +28,15 @@ export function AdminOwnerConnections() {
     finally { setLoading(false); }
   }, []);
   useEffect(() => { const supabase = getBrowserSupabaseClient(); void load(); const { data } = supabase.auth.onAuthStateChange((_event, session) => { if (session) window.setTimeout(() => void load(), 0); else setIssues([]); }); return () => data.subscription.unsubscribe(); }, [load]);
-  async function repair(issue: Issue) {
-    if (!window.confirm(`Repair owner access for ${issue.farm_name} using ${issue.contact_email}?`)) return;
+  async function repair(issue: Issue, resend = false) {
+    const prompt = resend
+      ? `Send one replacement owner invitation to ${issue.contact_email} for ${issue.farm_name}?`
+      : `Repair owner access for ${issue.farm_name} using ${issue.contact_email}?`;
+    if (!window.confirm(prompt)) return;
     const { data } = await getBrowserSupabaseClient().auth.getSession();
     setWorkingId(issue.submission_id); setError(""); setMessage("");
     try {
-      const response = await fetch("/api/admin-owner-connections", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token ?? ""}` }, body: JSON.stringify({ submissionId: issue.submission_id }) });
+      const response = await fetch("/api/admin-owner-connections", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token ?? ""}` }, body: JSON.stringify({ submissionId: issue.submission_id, resend }) });
       const result = await response.json() as { error?: string; invitation_sent?: boolean; invitation_already_sent?: boolean; invitation_sent_at?: string | null; farm_name?: string };
       if (!response.ok) throw new Error(result.error ?? "Owner access could not be repaired.");
       setMessage(result.invitation_already_sent
@@ -48,6 +51,7 @@ export function AdminOwnerConnections() {
     const invitationSent = Boolean(issue.invitation_sent_at);
     const successfulDelivery = ["delivered", "opened", "clicked"].includes(issue.delivery_status ?? "");
     const deliveryProblem = ["bounced", "failed", "canceled", "complained"].includes(issue.delivery_status ?? "");
+    const resendAvailable = Boolean(issue.resend_available_at && Date.now() >= Date.parse(issue.resend_available_at));
     const statusLabel = !invitationSent ? "Connection missing" : successfulDelivery ? "Email delivered" : deliveryProblem ? "Delivery problem" : issue.invitation_email_id ? "Email sent" : "Sent before tracking";
     const note = !invitationSent
       ? issue.account_exists ? issue.email_confirmed ? "A confirmed account exists and can be connected." : "An invited account exists and can be connected." : "No account exists yet; repairing will send an invitation."
@@ -55,6 +59,6 @@ export function AdminOwnerConnections() {
       : deliveryProblem ? `Resend reports ${issue.delivery_status}. Review the address before contacting the farmer.`
       : issue.invitation_email_id ? `Resend status: ${issue.delivery_status ?? "status temporarily unavailable"}. Awaiting owner activation.`
       : "This invitation was sent before delivery tracking was added. It remains protected from duplicate sends.";
-    return <article className="review-card" key={issue.farm_id}><div className="review-heading"><div><span className="pending-badge">{statusLabel}</span><h2>{issue.farm_name}</h2><p>{issue.contact_email}</p></div></div><p className="review-note">{note}</p><div className="review-actions"><button className="approve-button" type="button" disabled={invitationSent || workingId === issue.submission_id} onClick={() => void repair(issue)}>{workingId === issue.submission_id ? "Repairing…" : invitationSent ? "Awaiting owner" : "Repair owner access"}</button></div></article>;
+    return <article className="review-card" key={issue.farm_id}><div className="review-heading"><div><span className="pending-badge">{statusLabel}</span><h2>{issue.farm_name}</h2><p>{issue.contact_email}</p></div></div><p className="review-note">{note}</p><div className="review-actions"><button className="approve-button" type="button" disabled={workingId === issue.submission_id || (invitationSent && !resendAvailable)} onClick={() => void repair(issue, invitationSent)}>{workingId === issue.submission_id ? "Working…" : !invitationSent ? "Repair owner access" : resendAvailable ? "Send replacement invitation" : "24-hour resend protection"}</button></div></article>;
   })}</section>;
 }

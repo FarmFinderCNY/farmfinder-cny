@@ -53,11 +53,14 @@ export async function createAndSendOwnerInvitation({
   const emailResult = await emailResponse.json().catch(() => null) as { id?: unknown } | null;
   const resendEmailId = typeof emailResult?.id === "string" ? emailResult.id : null;
   const invitationSentAt = new Date().toISOString();
+  const previousInvitationCount = data.user.user_metadata?.owner_access_invitation_count;
+  const invitationCount = (typeof previousInvitationCount === "number" && Number.isFinite(previousInvitationCount) ? previousInvitationCount : 0) + 1;
   const { data: updatedUser, error: metadataError } = await serviceClient.auth.admin.updateUserById(data.user.id, {
     user_metadata: {
       ...data.user.user_metadata,
       owner_access_invitation_sent_at: invitationSentAt,
       owner_access_invitation_email_id: resendEmailId,
+      owner_access_invitation_count: invitationCount,
     },
   });
   if (metadataError) console.error("Owner invitation timestamp could not be saved:", metadataError.message);
