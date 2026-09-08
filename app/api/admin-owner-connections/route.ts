@@ -10,9 +10,9 @@ type OwnerSubmission = {
 type Farm = {
   id: string; name: string; address: string | null; city: string | null;
   state: string | null; zip_code: string | null; owner_user_id: string | null;
+  owner_access_activated_at: string | null; farmer_inventory_updated_at: string | null;
 };
 
-const INVITATION_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const invitationSentAt = (user: { user_metadata?: Record<string, unknown> } | undefined) => {
   const value = user?.user_metadata?.owner_access_invitation_sent_at;
   return typeof value === "string" && !Number.isNaN(Date.parse(value)) ? value : null;
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
   const { serviceClient } = clients;
   const [submissionResult, farmResult, userResult] = await Promise.all([
     serviceClient.from("farm_stand_submissions").select("id,farm_name,address,city,state,zip_code,contact_email,created_at").eq("submission_type", "owner").eq("status", "approved").order("created_at", { ascending: false }),
-    serviceClient.from("farm_stands").select("id,name,address,city,state,zip_code,owner_user_id").eq("is_active", true),
+    serviceClient.from("farm_stands").select("id,name,address,city,state,zip_code,owner_user_id,owner_access_activated_at,farmer_inventory_updated_at").eq("is_active", true),
     listAllAuthUsers(serviceClient),
   ]);
   if (submissionResult.error || farmResult.error || userResult.error) return NextResponse.json({ error: "Unable to audit owner connections." }, { status: 500 });
@@ -63,7 +63,9 @@ export async function GET(request: Request) {
     if (farm.owner_user_id && user?.email_confirmed_at) return [];
     return [{ submission_id: submission.id, farm_id: farm.id, farm_name: farm.name, contact_email: submission.contact_email, account_exists: Boolean(user), email_confirmed: Boolean(user?.email_confirmed_at), invitation_sent_at: invitationSentAt(user) }];
   });
-  return NextResponse.json({ issues });
+  const activated = farms.filter((farm) => Boolean(farm.owner_user_id && farm.owner_access_activated_at)).length;
+  const updatingProducts = farms.filter((farm) => Boolean(farm.owner_access_activated_at && farm.farmer_inventory_updated_at)).length;
+  return NextResponse.json({ issues, summary: { activated, awaiting_activation: issues.length, updating_products: updatingProducts, activated_without_updates: Math.max(0, activated - updatingProducts) } });
 }
 
 export async function POST(request: Request) {
@@ -84,7 +86,7 @@ export async function POST(request: Request) {
   let owner = (farm.owner_user_id ? users.find((user) => user.id === farm.owner_user_id) : undefined) ?? users.find((user) => user.email?.trim().toLowerCase() === email);
   if (farm.owner_user_id && owner?.email_confirmed_at) return NextResponse.json({ connected: true, already_connected: true, farm_name: farm.name });
   const lastInvitationAt = invitationSentAt(owner);
-  if (lastInvitationAt && Date.now() - Date.parse(lastInvitationAt) < INVITATION_COOLDOWN_MS) {
+  if (lastInvitationAt) {
     return NextResponse.json({ connected: true, invitation_already_sent: true, invitation_sent_at: lastInvitationAt, farm_name: farm.name });
   }
   let invitationSent = false;
