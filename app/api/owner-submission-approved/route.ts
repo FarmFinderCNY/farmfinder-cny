@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { createAndSendOwnerInvitation } from "@/lib/owner-access-invitation";
 
 type ApprovalBody = {
   submissionId?: unknown;
@@ -13,9 +14,10 @@ export async function POST(request: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const resendKey = process.env.RESEND_API_KEY;
   const authorization = request.headers.get("authorization");
 
-  if (!supabaseUrl || !publishableKey || !serviceRoleKey) {
+  if (!supabaseUrl || !publishableKey || !serviceRoleKey || !resendKey) {
     return NextResponse.json({ error: "Automatic owner access is not configured." }, { status: 503 });
   }
   if (!authorization?.startsWith("Bearer ")) {
@@ -96,14 +98,13 @@ export async function POST(request: Request) {
   let ownerUser = usersData.users.find((user) => user.email?.toLowerCase() === ownerEmail);
   let invitationSent = false;
   if (!ownerUser) {
-    const { data: invitation, error: invitationError } = await serviceClient.auth.admin.inviteUserByEmail(ownerEmail, {
-      redirectTo: "https://www.farmfindercny.com/farmer",
-    });
-    if (invitationError || !invitation.user) {
-      return NextResponse.json({ error: "The farm was published, but the owner invitation could not be created." }, { status: 502 });
+    const invitation = await createAndSendOwnerInvitation({ serviceClient, email: ownerEmail, farmName: farm.name, resendKey });
+    if ("error" in invitation) {
+      console.error("Owner access invitation failed:", invitation.detail ?? invitation.error);
+      return NextResponse.json({ error: `The farm was published, but ${invitation.error.toLowerCase()}` }, { status: 502 });
     }
     ownerUser = invitation.user;
-    invitationSent = true;
+    invitationSent = invitation.invitationSent;
   }
 
   const { error: connectionError } = await serviceClient

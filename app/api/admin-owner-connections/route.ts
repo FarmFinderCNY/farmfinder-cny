@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { createAndSendOwnerInvitation } from "@/lib/owner-access-invitation";
 
 type OwnerSubmission = {
   id: string; farm_name: string; address: string; city: string; state: string;
@@ -22,14 +23,15 @@ async function getAdminClients(request: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const resendKey = process.env.RESEND_API_KEY;
   const authorization = request.headers.get("authorization");
-  if (!supabaseUrl || !publishableKey || !serviceRoleKey || !authorization?.startsWith("Bearer ")) return null;
+  if (!supabaseUrl || !publishableKey || !serviceRoleKey || !resendKey || !authorization?.startsWith("Bearer ")) return null;
   const userClient = createClient(supabaseUrl, publishableKey, { auth: { persistSession: false, autoRefreshToken: false }, global: { headers: { Authorization: authorization } } });
   const { data: userData } = await userClient.auth.getUser(authorization.slice("Bearer ".length));
   if (!userData.user) return null;
   const serviceClient = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
   const { data: admin } = await serviceClient.from("admin_users").select("user_id").eq("user_id", userData.user.id).maybeSingle();
-  return admin ? { serviceClient } : null;
+  return admin ? { serviceClient, resendKey } : null;
 }
 
 export async function GET(request: Request) {
@@ -61,7 +63,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null) as { submissionId?: unknown } | null;
   const submissionId = typeof body?.submissionId === "string" ? body.submissionId : "";
   if (!submissionId) return NextResponse.json({ error: "Submission is required." }, { status: 400 });
-  const { serviceClient } = clients;
+  const { serviceClient, resendKey } = clients;
   const { data: submission, error: submissionError } = await serviceClient.from("farm_stand_submissions").select("id,farm_name,address,city,state,zip_code,contact_email,created_at").eq("id", submissionId).eq("submission_type", "owner").eq("status", "approved").maybeSingle();
   if (submissionError || !submission) return NextResponse.json({ error: "Approved owner submission not found." }, { status: 404 });
   const { data: farms, error: farmError } = await serviceClient.from("farm_stands").select("id,name,address,city,state,zip_code,owner_user_id").eq("is_active", true).order("created_at", { ascending: false });
@@ -74,10 +76,13 @@ export async function POST(request: Request) {
   let owner = usersData.users.find((user) => user.email?.trim().toLowerCase() === email);
   let invitationSent = false;
   if (!owner) {
-    const { data: invitation, error: invitationError } = await serviceClient.auth.admin.inviteUserByEmail(email, { redirectTo: "https://www.farmfindercny.com/farmer" });
-    if (invitationError || !invitation.user) return NextResponse.json({ error: "The owner invitation could not be sent." }, { status: 502 });
+    const invitation = await createAndSendOwnerInvitation({ serviceClient, email, farmName: farm.name, resendKey });
+    if ("error" in invitation) {
+      console.error("Owner access invitation failed:", invitation.detail ?? invitation.error);
+      return NextResponse.json({ error: invitation.error }, { status: 502 });
+    }
     owner = invitation.user;
-    invitationSent = true;
+    invitationSent = invitation.invitationSent;
   }
   const { error: updateError } = await serviceClient.from("farm_stands").update({ owner_user_id: owner.id, is_verified: true }).eq("id", farm.id).is("owner_user_id", null);
   if (updateError) return NextResponse.json({ error: "The existing listing could not be connected." }, { status: 500 });
