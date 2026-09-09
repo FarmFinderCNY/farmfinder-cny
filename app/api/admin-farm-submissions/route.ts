@@ -5,6 +5,7 @@ import { listingsMatch } from "@/lib/listing-match";
 import { listAllAuthUsers } from "@/lib/supabase-admin-users";
 
 type ReviewBody = { submissionId?: unknown; decision?: unknown; latitude?: unknown; longitude?: unknown };
+type ExistingFarm = { id: string; name: string; address: string | null; city: string | null; state: string | null; zip_code: string | null; owner_user_id: string | null };
 
 export async function POST(request: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -32,16 +33,37 @@ export async function POST(request: Request) {
   const { data: submission, error: submissionError } = await serviceClient.from("farm_stand_submissions").select("id,submission_type,status,farm_name,address,city,state,zip_code,contact_email").eq("id", submissionId).maybeSingle();
   if (submissionError || !submission || submission.status !== "pending") return NextResponse.json({ error: "This submission is no longer pending." }, { status: 409 });
 
-  const rpcName = decision === "approve" ? "approve_farm_submission" : "reject_farm_submission";
-  const rpcArgs = decision === "approve" ? { submission_id: submissionId, farm_latitude: latitude, farm_longitude: longitude } : { submission_id: submissionId };
-  const { error: rpcError } = await userClient.rpc(rpcName, rpcArgs);
-  if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 500 });
+  let matchedExistingFarm: ExistingFarm | null = null;
+  if (decision === "approve") {
+    const { data: existingFarms, error: existingFarmError } = await serviceClient.from("farm_stands").select("id,name,address,city,state,zip_code,owner_user_id").eq("is_active", true).limit(500);
+    if (existingFarmError) return NextResponse.json({ error: "Existing listings could not be checked safely." }, { status: 503 });
+    matchedExistingFarm = ((existingFarms ?? []) as ExistingFarm[]).find((farm) => listingsMatch(farm, submission)) ?? null;
+    if (matchedExistingFarm && submission.submission_type === "community") {
+      return NextResponse.json({ error: `${matchedExistingFarm.name} is already active. Reject this duplicate suggestion instead of publishing it.` }, { status: 409 });
+    }
+    if (matchedExistingFarm?.owner_user_id) {
+      return NextResponse.json({ error: `${matchedExistingFarm.name} is already owner managed. Verify the requester before changing access.` }, { status: 409 });
+    }
+  }
+
+  if (matchedExistingFarm) {
+    const { error: statusError } = await serviceClient.from("farm_stand_submissions").update({ status: "approved" }).eq("id", submissionId).eq("status", "pending");
+    if (statusError) return NextResponse.json({ error: "The existing listing was found, but the submission could not be approved safely." }, { status: 500 });
+  } else {
+    const rpcName = decision === "approve" ? "approve_farm_submission" : "reject_farm_submission";
+    const rpcArgs = decision === "approve" ? { submission_id: submissionId, farm_latitude: latitude, farm_longitude: longitude } : { submission_id: submissionId };
+    const { error: rpcError } = await userClient.rpc(rpcName, rpcArgs);
+    if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 500 });
+  }
   if (decision === "reject") return NextResponse.json({ completed: true, decision });
   if (submission.submission_type === "community") return NextResponse.json({ completed: true, decision, owner_connection_required: false });
 
-  const { data: farms, error: farmError } = await serviceClient.from("farm_stands").select("id,name,address,city,state,zip_code,owner_user_id").eq("is_active", true).order("created_at", { ascending: false }).limit(500);
-  const farm = farms?.find((candidate) => listingsMatch(candidate, submission));
-  if (farmError || !farm) return NextResponse.json({ error: "The farm was published, but owner access is incomplete. It is now flagged in Owner Access Check." }, { status: 502 });
+  let farm = matchedExistingFarm;
+  if (!farm) {
+    const { data: farms, error: farmError } = await serviceClient.from("farm_stands").select("id,name,address,city,state,zip_code,owner_user_id").eq("is_active", true).order("created_at", { ascending: false }).limit(500);
+    farm = ((farms ?? []) as ExistingFarm[]).find((candidate) => listingsMatch(candidate, submission)) ?? null;
+    if (farmError || !farm) return NextResponse.json({ error: "The farm was published, but owner access is incomplete. It is now flagged in Owner Access Check." }, { status: 502 });
+  }
   if (farm.owner_user_id) return NextResponse.json({ completed: true, decision, owner_connected: true });
 
   const email = submission.contact_email.trim().toLowerCase();
