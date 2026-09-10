@@ -33,15 +33,17 @@ export function FarmerGrowingPractices({
       return;
     }
     setSaving(true); setError(""); setMessage("");
-    const { error: updateError } = await getBrowserSupabaseClient()
+    const { data: updatedFarm, error: updateError } = await getBrowserSupabaseClient()
       .from("farm_stands")
       .update({
         growing_practices: selected,
         growing_practices_note: String(values.get("growing_practices_note") ?? "").trim() || null,
         organic_certifier: selected.includes("certified_organic") ? organicCertifier : null,
       })
-      .eq("id", farmId);
-    if (updateError) setError(updateError.message.includes("growing_practices") ? "Growing practices need to be enabled in FarmFinder before they can be saved." : updateError.message);
+      .eq("id", farmId)
+      .select("id")
+      .maybeSingle();
+    if (updateError || !updatedFarm) setError(updateError?.message.includes("growing_practices") ? "Growing practices need to be enabled in FarmFinder before they can be saved." : updateError?.message ?? "Growing practices were not saved. Please refresh and try again.");
     else setMessage("Growing practices saved. They now appear on your public listing.");
     setSaving(false);
   }

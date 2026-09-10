@@ -99,23 +99,24 @@ export async function POST(request: Request) {
   const { data: claimantAccount, error: claimantError } =
     await serviceClient.auth.admin.getUserById(claim.requested_by);
   const claimantEmail = claimantAccount.user?.email?.trim().toLowerCase();
-  if (claimantError || !claimantEmail)
+  if (claimantError || !claimantEmail || !claimantAccount.user?.email_confirmed_at)
     return NextResponse.json(
-      { error: "The approved owner account email could not be found." },
+      { error: "The approved owner must confirm their account before access can be activated." },
       { status: 409 },
     );
 
-  const { error: activationError } = await serviceClient
+  const { data: activatedFarm, error: activationError } = await serviceClient
     .from("farm_stands")
     .update({
       owner_user_id: claim.requested_by,
-      owner_access_activated_at:
-        claimantAccount.user?.email_confirmed_at ?? new Date().toISOString(),
+      owner_access_activated_at: claimantAccount.user.email_confirmed_at,
       is_verified: true,
     })
     .eq("id", claim.farm_id)
-    .eq("owner_user_id", claim.requested_by);
-  if (activationError) {
+    .eq("owner_user_id", claim.requested_by)
+    .select("id")
+    .maybeSingle();
+  if (activationError || !activatedFarm) {
     return NextResponse.json(
       { error: "Ownership was approved, but activation could not be recorded." },
       { status: 500 },
@@ -131,6 +132,7 @@ export async function POST(request: Request) {
       "Content-Type": "application/json",
       "Idempotency-Key": `ownership-approved-${claim.id}`,
     },
+    signal: AbortSignal.timeout(10_000),
     body: JSON.stringify({
       from: "FarmFinder CNY <notifications@send.farmfindercny.com>",
       to: [claimantEmail],

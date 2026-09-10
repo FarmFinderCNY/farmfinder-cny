@@ -32,21 +32,28 @@ export async function createAndSendOwnerInvitation({
   }
 
   const safeFarmName = escapeHtml(farmName);
-  const emailResponse = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendKey}`,
-      "Content-Type": "application/json",
-      // A fresh secure link must be deliverable when an earlier email attempt failed.
-      "Idempotency-Key": `owner-access-${data.user.id}-${Date.now()}`,
-    },
-    body: JSON.stringify({
-      from: "FarmFinder CNY <notifications@send.farmfindercny.com>",
-      to: [email],
-      subject: `Manage ${farmName} on FarmFinder CNY`,
-      html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#123f2d;line-height:1.6"><p style="font-weight:700;text-transform:uppercase;letter-spacing:.08em">FarmFinder CNY</p><h1>Your farm is approved</h1><p>Your listing for <strong>${safeFarmName}</strong> is ready. Use the secure button below to activate your owner access and manage the farm.</p><p><a href="${escapeHtml(data.properties.action_link)}" style="display:inline-block;padding:12px 18px;background:#123f2d;color:white;text-decoration:none;border-radius:6px;font-weight:700">Activate owner access</a></p><p>After opening the link, create a password in the Farmer Portal so you can return at any time.</p><p style="color:#68756c;font-size:13px">This secure link is intended for the owner who submitted the listing. Questions? Reply to this email or contact farmfindercny@gmail.com.</p></div>`,
-    }),
-  });
+  let emailResponse: Response;
+  try {
+    emailResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendKey}`,
+        "Content-Type": "application/json",
+        // Resend retains idempotency keys for 24 hours. A stable key prevents
+        // repeat clicks from sending duplicate invitations during that window.
+        "Idempotency-Key": `owner-access-${data.user.id}-${farmName.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 80)}`,
+      },
+      signal: AbortSignal.timeout(10_000),
+      body: JSON.stringify({
+        from: "FarmFinder CNY <notifications@send.farmfindercny.com>",
+        to: [email],
+        subject: `Manage ${farmName} on FarmFinder CNY`,
+        html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#123f2d;line-height:1.6"><p style="font-weight:700;text-transform:uppercase;letter-spacing:.08em">FarmFinder CNY</p><h1>Your farm is approved</h1><p>Your listing for <strong>${safeFarmName}</strong> is ready. Use the secure button below to activate your owner access and manage the farm.</p><p><a href="${escapeHtml(data.properties.action_link)}" style="display:inline-block;padding:12px 18px;background:#123f2d;color:white;text-decoration:none;border-radius:6px;font-weight:700">Activate owner access</a></p><p>After opening the link, create a password in the Farmer Portal so you can return at any time.</p><p style="color:#68756c;font-size:13px">This secure link is intended for the owner who submitted the listing. Questions? Reply to this email or contact farmfindercny@gmail.com.</p></div>`,
+      }),
+    });
+  } catch (error) {
+    return { error: "The owner access email service did not respond.", detail: error instanceof Error ? error.message : String(error) };
+  }
   if (!emailResponse.ok) {
     return { error: "The owner access email could not be sent.", detail: `${emailResponse.status}: ${await emailResponse.text()}` };
   }
@@ -55,14 +62,14 @@ export async function createAndSendOwnerInvitation({
   const invitationSentAt = new Date().toISOString();
   const previousInvitationCount = data.user.user_metadata?.owner_access_invitation_count;
   const invitationCount = (typeof previousInvitationCount === "number" && Number.isFinite(previousInvitationCount) ? previousInvitationCount : 0) + 1;
-  const { data: updatedUser, error: metadataError } = await serviceClient.auth.admin.updateUserById(data.user.id, {
-    user_metadata: {
-      ...data.user.user_metadata,
-      owner_access_invitation_sent_at: invitationSentAt,
-      owner_access_invitation_email_id: resendEmailId,
-      owner_access_invitation_count: invitationCount,
-    },
-  });
-  if (metadataError) console.error("Owner invitation timestamp could not be saved:", metadataError.message);
-  return { user: updatedUser.user ?? data.user, invitationSent: true, invitationSentAt, resendEmailId };
+  const metadata = {
+    ...data.user.user_metadata,
+    owner_access_invitation_sent_at: invitationSentAt,
+    owner_access_invitation_email_id: resendEmailId,
+    owner_access_invitation_count: invitationCount,
+  };
+  let metadataResult = await serviceClient.auth.admin.updateUserById(data.user.id, { user_metadata: metadata });
+  if (metadataResult.error) metadataResult = await serviceClient.auth.admin.updateUserById(data.user.id, { user_metadata: metadata });
+  if (metadataResult.error) console.error("Owner invitation was sent but its audit record could not be saved:", metadataResult.error.message);
+  return { user: metadataResult.data.user ?? data.user, invitationSent: true, invitationSentAt, resendEmailId };
 }

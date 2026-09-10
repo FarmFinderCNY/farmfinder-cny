@@ -21,6 +21,14 @@ function escapeHtml(value: string) {
 }
 
 export async function POST(request: Request) {
+  const origin = request.headers.get("origin");
+  if (origin && origin !== new URL(request.url).origin) {
+    return NextResponse.json({ error: "Cross-origin messages are not allowed." }, { status: 403 });
+  }
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (Number.isFinite(contentLength) && contentLength > 20_000) {
+    return NextResponse.json({ error: "Message is too large." }, { status: 413 });
+  }
   let body: ContactPayload;
   try {
     body = await request.json() as ContactPayload;
@@ -63,6 +71,7 @@ export async function POST(request: Request) {
           Authorization: `Bearer ${resendKey}`,
           "Content-Type": "application/json",
         },
+        signal: AbortSignal.timeout(10_000),
         body: JSON.stringify({
           from: "FarmFinder CNY <notifications@send.farmfindercny.com>",
           to: [adminEmail],

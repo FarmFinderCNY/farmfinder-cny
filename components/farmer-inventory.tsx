@@ -47,10 +47,10 @@ export function FarmerInventory({
         body: JSON.stringify({ farmId, inventoryItemId }),
       });
       if (!response.ok) throw new Error(await response.text());
-      const result = await response.json() as { sent?: unknown; failed?: unknown };
+      const result = await response.json() as { sent?: unknown; failed?: unknown; cleanup_failed?: unknown };
       return {
         sent: typeof result.sent === "number" ? result.sent : 0,
-        failed: typeof result.failed === "number" ? result.failed : 0,
+        failed: (typeof result.failed === "number" ? result.failed : 0) + (typeof result.cleanup_failed === "number" ? result.cleanup_failed : 0),
       };
     } catch (notificationError) {
       console.error("Inventory alert delivery failed:", notificationError);
@@ -111,14 +111,16 @@ export function FarmerInventory({
     setError("");
     setMessage("");
     const updatedAt = new Date().toISOString();
-    const { error: confirmationError } = await getBrowserSupabaseClient()
+    const { data: confirmedFarm, error: confirmationError } = await getBrowserSupabaseClient()
       .from("farm_stands")
       .update({
         inventory_updated_at: updatedAt,
         farmer_inventory_updated_at: updatedAt,
       })
-      .eq("id", farmId);
-    if (confirmationError)
+      .eq("id", farmId)
+      .select("id")
+      .maybeSingle();
+    if (confirmationError || !confirmedFarm)
       setError("FarmFinder could not confirm the listing. Please try again.");
     else {
       setLastConfirmedAt(updatedAt);
@@ -160,14 +162,16 @@ export function FarmerInventory({
         return;
       }
       event.currentTarget.reset();
-      const { error: freshnessError } = await getBrowserSupabaseClient()
+      const { data: refreshedFarm, error: freshnessError } = await getBrowserSupabaseClient()
         .from("farm_stands")
         .update({
           inventory_updated_at: updatedAt,
           farmer_inventory_updated_at: updatedAt,
         })
-        .eq("id", farmId);
-      if (freshnessError) {
+        .eq("id", farmId)
+        .select("id")
+        .maybeSingle();
+      if (freshnessError || !refreshedFarm) {
         setError(
           "Product saved, but live availability could not be confirmed. Please use ‘Everything is still accurate’ once.",
         );
@@ -206,12 +210,14 @@ export function FarmerInventory({
       ),
     );
     const supabase = getBrowserSupabaseClient();
-    const { error: updateError } = await supabase
+    const { data: updatedItem, error: updateError } = await supabase
       .from("farm_inventory")
       .update({ status, updated_at: updatedAt })
       .eq("id", item.id)
-      .eq("farm_id", farmId);
-    if (updateError) {
+      .eq("farm_id", farmId)
+      .select("id")
+      .maybeSingle();
+    if (updateError || !updatedItem) {
       setItems((current) =>
         current.map((currentItem) =>
           currentItem.id === item.id
@@ -223,14 +229,16 @@ export function FarmerInventory({
       setSavingItemId(null);
       return;
     }
-    const { error: farmUpdateError } = await supabase
+    const { data: refreshedFarm, error: farmUpdateError } = await supabase
       .from("farm_stands")
       .update({
         inventory_updated_at: updatedAt,
         farmer_inventory_updated_at: updatedAt,
       })
-      .eq("id", farmId);
-    if (farmUpdateError)
+      .eq("id", farmId)
+      .select("id")
+      .maybeSingle();
+    if (farmUpdateError || !refreshedFarm)
       setError(
         "Product updated, but FarmFinder couldn’t refresh the listing timestamp.",
       );
@@ -252,23 +260,27 @@ export function FarmerInventory({
     setSavingItemId(item.id);
     setError("");
     setMessage("");
-    const { error: deleteError } = await getBrowserSupabaseClient()
+    const { data: deletedItem, error: deleteError } = await getBrowserSupabaseClient()
       .from("farm_inventory")
       .delete()
       .eq("id", item.id)
-      .eq("farm_id", farmId);
-    if (deleteError) setError(deleteError.message);
+      .eq("farm_id", farmId)
+      .select("id")
+      .maybeSingle();
+    if (deleteError || !deletedItem) setError(deleteError?.message ?? "That product was not removed. Please refresh and try again.");
     else {
       const updatedAt = new Date().toISOString();
       setItems((current) => current.filter((entry) => entry.id !== item.id));
-      const { error: freshnessError } = await getBrowserSupabaseClient()
+      const { data: refreshedFarm, error: freshnessError } = await getBrowserSupabaseClient()
         .from("farm_stands")
         .update({
           inventory_updated_at: updatedAt,
           farmer_inventory_updated_at: updatedAt,
         })
-        .eq("id", farmId);
-      if (freshnessError) {
+        .eq("id", farmId)
+        .select("id")
+        .maybeSingle();
+      if (freshnessError || !refreshedFarm) {
         setError(
           `${item.name} was removed, but the listing timestamp could not be refreshed.`,
         );

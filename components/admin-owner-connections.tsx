@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
 
-type Issue = { submission_id: string; farm_id: string; farm_name: string; contact_email: string; account_exists: boolean; email_confirmed: boolean; invitation_sent_at: string | null; invitation_email_id: string | null; delivery_status: string | null; resend_available_at: string | null };
+type Issue = { submission_id: string; farm_id: string; farm_name: string; contact_email: string; account_exists: boolean; email_confirmed: boolean; connection_conflict: boolean; invitation_sent_at: string | null; invitation_email_id: string | null; delivery_status: string | null; resend_available_at: string | null };
 type OwnerSummary = { activated: number; awaiting_activation: number; updating_products: number; activated_without_updates: number };
 
 export function AdminOwnerConnections() {
@@ -52,13 +52,14 @@ export function AdminOwnerConnections() {
     const successfulDelivery = ["delivered", "opened", "clicked"].includes(issue.delivery_status ?? "");
     const deliveryProblem = ["bounced", "failed", "canceled", "complained"].includes(issue.delivery_status ?? "");
     const resendAvailable = Boolean(issue.resend_available_at && Date.now() >= Date.parse(issue.resend_available_at));
-    const statusLabel = !invitationSent ? "Connection missing" : successfulDelivery ? "Email delivered" : deliveryProblem ? "Delivery problem" : issue.invitation_email_id ? "Email sent" : "Sent before tracking";
-    const note = !invitationSent
+    const statusLabel = issue.connection_conflict ? "Account conflict" : !invitationSent ? "Connection missing" : successfulDelivery ? "Email delivered" : deliveryProblem ? "Delivery problem" : issue.invitation_email_id ? "Email sent" : "Sent before tracking";
+    const note = issue.connection_conflict ? "This listing is connected to a different account. Verify both identities before changing access."
+      : !invitationSent
       ? issue.account_exists ? issue.email_confirmed ? "A confirmed account exists and can be connected." : "An invited account exists and can be connected." : "No account exists yet; repairing will send an invitation."
       : successfulDelivery ? "The invitation reached the farmer's email provider and is awaiting owner activation."
       : deliveryProblem ? `Resend reports ${issue.delivery_status}. Review the address before contacting the farmer.`
       : issue.invitation_email_id ? `Resend status: ${issue.delivery_status ?? "status temporarily unavailable"}. Awaiting owner activation.`
       : "This invitation was sent before delivery tracking was added. It remains protected from duplicate sends.";
-    return <article className="review-card" key={issue.farm_id}><div className="review-heading"><div><span className="pending-badge">{statusLabel}</span><h2>{issue.farm_name}</h2><p>{issue.contact_email}</p></div></div><p className="review-note">{note}</p><div className="review-actions"><button className="approve-button" type="button" disabled={workingId === issue.submission_id || (invitationSent && !resendAvailable)} onClick={() => void repair(issue, invitationSent)}>{workingId === issue.submission_id ? "Working…" : !invitationSent ? "Repair owner access" : resendAvailable ? "Send replacement invitation" : "24-hour resend protection"}</button></div></article>;
+    return <article className="review-card" key={issue.farm_id}><div className="review-heading"><div><span className="pending-badge">{statusLabel}</span><h2>{issue.farm_name}</h2><p>{issue.contact_email}</p></div></div><p className="review-note">{note}</p><div className="review-actions"><button className="approve-button" type="button" disabled={issue.connection_conflict || workingId === issue.submission_id || (invitationSent && !resendAvailable)} onClick={() => void repair(issue, invitationSent)}>{issue.connection_conflict ? "Manual review required" : workingId === issue.submission_id ? "Working…" : !invitationSent ? "Repair owner access" : resendAvailable ? "Send replacement invitation" : "24-hour resend protection"}</button></div></article>;
   })}</section>;
 }

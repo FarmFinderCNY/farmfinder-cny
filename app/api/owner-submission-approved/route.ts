@@ -108,13 +108,15 @@ export async function POST(request: Request) {
     invitationSent = invitation.invitationSent;
   }
 
-  const { error: connectionError } = await serviceClient
+  const { data: connectedFarm, error: connectionError } = await serviceClient
     .from("farm_stands")
     .update({ owner_user_id: ownerUser.id, is_verified: true })
     .eq("id", farm.id)
-    .is("owner_user_id", null);
+    .is("owner_user_id", null)
+    .select("id")
+    .maybeSingle();
 
-  if (connectionError) {
+  if (connectionError || !connectedFarm) {
     return NextResponse.json({ error: "The farm was published, but owner access could not be connected." }, { status: 500 });
   }
 

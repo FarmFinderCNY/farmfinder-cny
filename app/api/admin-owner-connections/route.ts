@@ -80,10 +80,14 @@ export async function GET(request: Request) {
     const farm = farms.find((candidate) => matchesSubmission(candidate, submission));
     if (!farm || seenFarmIds.has(farm.id)) return [];
     seenFarmIds.add(farm.id);
-    const user = (farm.owner_user_id ? usersById.get(farm.owner_user_id) : undefined) ?? usersByEmail.get(submission.contact_email.trim().toLowerCase());
-    if (farm.owner_user_id && user?.email_confirmed_at) return [];
+    const submissionEmail = submission.contact_email.trim().toLowerCase();
+    const connectedUser = farm.owner_user_id ? usersById.get(farm.owner_user_id) : undefined;
+    const emailUser = usersByEmail.get(submissionEmail);
+    const connectionConflict = Boolean(farm.owner_user_id && connectedUser?.email?.trim().toLowerCase() !== submissionEmail);
+    const user = connectedUser ?? emailUser;
+    if (farm.owner_user_id && user?.email_confirmed_at && !connectionConflict) return [];
     const sentAt = invitationSentAt(user);
-    return [{ submission_id: submission.id, farm_id: farm.id, farm_name: farm.name, contact_email: submission.contact_email, account_exists: Boolean(user), email_confirmed: Boolean(user?.email_confirmed_at), invitation_sent_at: sentAt, invitation_email_id: invitationEmailId(user), resend_available_at: sentAt ? new Date(Date.parse(sentAt) + INVITATION_RESEND_DELAY_MS).toISOString() : null }];
+    return [{ submission_id: submission.id, farm_id: farm.id, farm_name: farm.name, contact_email: submission.contact_email, account_exists: Boolean(user), email_confirmed: Boolean(user?.email_confirmed_at), connection_conflict: connectionConflict, invitation_sent_at: sentAt, invitation_email_id: invitationEmailId(user), resend_available_at: sentAt ? new Date(Date.parse(sentAt) + INVITATION_RESEND_DELAY_MS).toISOString() : null }];
   });
   const issues = await Promise.all(pendingIssues.map(async (issue) => ({
     ...issue,
@@ -111,6 +115,9 @@ export async function POST(request: Request) {
   const { users, error: usersError } = await listAllAuthUsers(serviceClient);
   if (usersError) return NextResponse.json({ error: "The owner account could not be checked." }, { status: 502 });
   let owner = (farm.owner_user_id ? users.find((user) => user.id === farm.owner_user_id) : undefined) ?? users.find((user) => user.email?.trim().toLowerCase() === email);
+  if (farm.owner_user_id && owner?.email?.trim().toLowerCase() !== email) {
+    return NextResponse.json({ error: "This listing is connected to a different account. Verify both identities before changing access." }, { status: 409 });
+  }
   if (farm.owner_user_id && owner?.email_confirmed_at) return NextResponse.json({ connected: true, already_connected: true, farm_name: farm.name });
   const lastInvitationAt = invitationSentAt(owner);
   if (lastInvitationAt && !resend) {
@@ -130,7 +137,9 @@ export async function POST(request: Request) {
     invitationSent = invitation.invitationSent;
   }
   const update = serviceClient.from("farm_stands").update({ owner_user_id: owner.id, is_verified: true }).eq("id", farm.id);
-  const { error: updateError } = farm.owner_user_id ? await update.eq("owner_user_id", farm.owner_user_id) : await update.is("owner_user_id", null);
-  if (updateError) return NextResponse.json({ error: "The existing listing could not be connected." }, { status: 500 });
+  const { data: connectedFarm, error: updateError } = farm.owner_user_id
+    ? await update.eq("owner_user_id", farm.owner_user_id).select("id").maybeSingle()
+    : await update.is("owner_user_id", null).select("id").maybeSingle();
+  if (updateError || !connectedFarm) return NextResponse.json({ error: "The existing listing could not be connected." }, { status: 409 });
   return NextResponse.json({ connected: true, invitation_sent: invitationSent, invitation_sent_at: invitationSent ? invitationSentAt(owner) : null, farm_name: farm.name });
 }

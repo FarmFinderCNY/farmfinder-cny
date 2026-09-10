@@ -66,9 +66,12 @@ export function AdminOwnershipQueue() {
           },
           body: JSON.stringify({ claimId: id }),
         });
-        setMessage(emailResponse.ok
-          ? "Ownership approved. Welcome instructions were emailed to the farmer."
-          : "Ownership approved, but the welcome email could not be sent. The farmer can still sign in and manage the listing.");
+        const emailResult = await emailResponse.json().catch(() => null) as { error?: string } | null;
+        if (emailResponse.ok) {
+          setMessage("Ownership approved. Welcome instructions were emailed to the farmer.");
+        } else {
+          setError(emailResult?.error ?? "Ownership was approved, but activation follow-up failed. Check Owner Access before contacting the farmer.");
+        }
       } else {
         setMessage(`${kind === "claim" ? "Ownership" : "Listing update"} request ${decision === "approve" ? "approved" : "rejected"}.`);
       }

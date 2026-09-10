@@ -40,31 +40,36 @@ export async function POST(request: Request) {
   }
 
   let connected = 0;
+  const failures: string[] = [];
   const approvedForUser = (submissions ?? []).filter(
     (submission) => submission.contact_email.trim().toLowerCase() === user.email?.trim().toLowerCase(),
   );
+  const { data: farms, error: farmError } = await serviceClient
+    .from("farm_stands")
+    .select("id,owner_user_id,name,address,city,state,zip_code")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+    .limit(500);
+  if (farmError) return NextResponse.json({ error: "Approved owner farm lookup failed." }, { status: 500 });
+
   for (const submission of approvedForUser) {
-    const { data: farms, error: farmError } = await serviceClient
-      .from("farm_stands")
-      .select("id,owner_user_id,name,address,city,state,zip_code")
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(500);
-
-    if (farmError) {
-      console.error("Approved owner farm lookup failed:", farmError.message);
-      continue;
-    }
     const farm = farms?.find((candidate) => listingsMatch(candidate, submission));
-    if (!farm || (farm.owner_user_id && farm.owner_user_id !== user.id)) continue;
+    if (!farm) { failures.push(`${submission.farm_name}: listing not found`); continue; }
+    if (farm.owner_user_id && farm.owner_user_id !== user.id) { failures.push(`${submission.farm_name}: listing belongs to another account`); continue; }
 
-    const { error: updateError } = await serviceClient
+    const { data: updatedFarm, error: updateError } = await serviceClient
       .from("farm_stands")
       .update({ owner_user_id: user.id, owner_access_activated_at: new Date().toISOString(), is_verified: true })
       .eq("id", farm.id)
-      .or(`owner_user_id.is.null,owner_user_id.eq.${user.id}`);
-    if (!updateError) connected += 1;
+      .or(`owner_user_id.is.null,owner_user_id.eq.${user.id}`)
+      .select("id")
+      .maybeSingle();
+    if (updateError || !updatedFarm) failures.push(`${submission.farm_name}: connection was not saved`);
+    else connected += 1;
   }
 
-  return NextResponse.json({ connected });
+  if (approvedForUser.length > 0 && connected === 0) {
+    return NextResponse.json({ error: "Your approved farm was found, but access could not be connected. FarmFinder has flagged this for administrator review.", failures }, { status: 409 });
+  }
+  return NextResponse.json({ connected, failures });
 }

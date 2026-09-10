@@ -122,12 +122,14 @@ export function FarmerPortal() {
     setQuickConfirmationHandled(true);
     void (async () => {
       const t = new Date().toISOString(),
-        { error: e } = await getBrowserSupabaseClient()
+        { data: confirmedFarm, error: e } = await getBrowserSupabaseClient()
           .from("farm_stands")
           .update({ inventory_updated_at: t, farmer_inventory_updated_at: t })
           .eq("id", farm.id)
-          .eq("owner_user_id", userId);
-      if (e)
+          .eq("owner_user_id", userId)
+          .select("id")
+          .maybeSingle();
+      if (e || !confirmedFarm)
         setError(
           "FarmFinder could not confirm the listing. Please use the confirmation button below.",
         );

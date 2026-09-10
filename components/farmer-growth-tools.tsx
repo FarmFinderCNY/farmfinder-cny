@@ -41,15 +41,15 @@ export function FarmerGrowthTools({ farmId }: { farmId: string }) {
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
     if (!user?.email) { setMessage("We could not find the email for this account."); setLoading(false); return; }
-    const { error } = await supabase.from("farmer_update_reminders").upsert({
+    const { data: savedReminder, error } = await supabase.from("farmer_update_reminders").upsert({
       farm_id: farmId,
       user_id: user.id,
       email: user.email,
       interval_days: days,
       active,
       updated_at: new Date().toISOString(),
-    }, { onConflict: "farm_id,user_id" });
-    if (error) setMessage("The reminder preference could not be saved. Please try again.");
+    }, { onConflict: "farm_id,user_id" }).select("id").maybeSingle();
+    if (error || !savedReminder) setMessage("The reminder preference could not be saved. Please try again.");
     else { setRemindersEnabled(active); setIntervalDays(days); setMessage(active ? `Update reminders are on every ${days} days.` : "Update reminders are off."); }
     setLoading(false);
   }

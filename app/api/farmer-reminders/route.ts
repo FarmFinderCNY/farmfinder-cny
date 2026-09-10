@@ -16,26 +16,33 @@ export async function GET(request: Request) {
   if (request.headers.get("authorization") !== `Bearer ${cronSecret}`) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data } = await supabase.from("farmer_update_reminders").select("id,farm_id,email,interval_days,last_sent_at").eq("active", true);
+  const { data, error: reminderError } = await supabase.from("farmer_update_reminders").select("id,farm_id,email,interval_days,last_sent_at").eq("active", true);
+  if (reminderError) return NextResponse.json({ error: "Active reminders could not be loaded." }, { status: 500 });
   let sent = 0;
+  let failed = 0;
   for (const reminder of (data ?? []) as Reminder[]) {
-    const { data: farm } = await supabase.from("farm_stands").select("name,farmer_inventory_updated_at").eq("id", reminder.farm_id).maybeSingle();
-    if (!farm) continue;
+    const { data: farm, error: farmError } = await supabase.from("farm_stands").select("name,farmer_inventory_updated_at").eq("id", reminder.farm_id).maybeSingle();
+    if (farmError || !farm) { failed += 1; continue; }
     const baseline = Math.max(new Date(farm.farmer_inventory_updated_at ?? 0).getTime(), new Date(reminder.last_sent_at ?? 0).getTime());
     if (Date.now() - baseline < reminder.interval_days * 24 * 60 * 60 * 1000) continue;
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: "FarmFinder CNY <notifications@send.farmfindercny.com>",
-        to: [reminder.email],
-        subject: `Is ${farm.name}'s availability still accurate?`,
-        html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#123f2d;line-height:1.55"><p style="font-weight:700;text-transform:uppercase;letter-spacing:.08em">FarmFinder CNY</p><h1>A 30-second freshness check</h1><p>Is everything currently shown for <strong>${escapeHtml(farm.name)}</strong> still accurate?</p><p><a href="https://www.farmfindercny.com/farmer?confirm=${reminder.farm_id}" style="display:inline-block;margin:4px 8px 8px 0;padding:12px 18px;background:#123f2d;color:white;text-decoration:none;border-radius:6px;font-weight:700">✓ Everything is still accurate</a><a href="https://www.farmfindercny.com/farmer" style="display:inline-block;margin:4px 0 8px;padding:12px 18px;border:1px solid #123f2d;color:#123f2d;text-decoration:none;border-radius:6px;font-weight:700">Update my products</a></p><p>After you confirm or update, customers will see your availability as current for the next seven days.</p><p style="color:#68756c;font-size:13px">Keeping this current helps customers know what is worth the trip. You control reminder frequency inside the Farmer Portal.</p></div>`,
-      }),
-    });
-    if (!response.ok) continue;
-    await supabase.from("farmer_update_reminders").update({ last_sent_at: new Date().toISOString() }).eq("id", reminder.id);
+    let response: Response;
+    try {
+      response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json", "Idempotency-Key": `farmer-reminder-${reminder.id}-${baseline}` },
+        signal: AbortSignal.timeout(10_000),
+        body: JSON.stringify({
+          from: "FarmFinder CNY <notifications@send.farmfindercny.com>",
+          to: [reminder.email],
+          subject: `Is ${farm.name}'s availability still accurate?`,
+          html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#123f2d;line-height:1.55"><p style="font-weight:700;text-transform:uppercase;letter-spacing:.08em">FarmFinder CNY</p><h1>A 30-second freshness check</h1><p>Is everything currently shown for <strong>${escapeHtml(farm.name)}</strong> still accurate?</p><p><a href="https://www.farmfindercny.com/farmer?confirm=${reminder.farm_id}" style="display:inline-block;margin:4px 8px 8px 0;padding:12px 18px;background:#123f2d;color:white;text-decoration:none;border-radius:6px;font-weight:700">✓ Everything is still accurate</a><a href="https://www.farmfindercny.com/farmer" style="display:inline-block;margin:4px 0 8px;padding:12px 18px;border:1px solid #123f2d;color:#123f2d;text-decoration:none;border-radius:6px;font-weight:700">Update my products</a></p><p>After you confirm or update, customers will see your availability as current for the next seven days.</p><p style="color:#68756c;font-size:13px">Keeping this current helps customers know what is worth the trip. You control reminder frequency inside the Farmer Portal.</p></div>`,
+        }),
+      });
+    } catch { failed += 1; continue; }
+    if (!response.ok) { failed += 1; continue; }
+    const { data: updatedReminder, error: updateError } = await supabase.from("farmer_update_reminders").update({ last_sent_at: new Date().toISOString() }).eq("id", reminder.id).select("id").maybeSingle();
+    if (updateError || !updatedReminder) { failed += 1; continue; }
     sent += 1;
   }
-  return NextResponse.json({ sent });
+  return NextResponse.json({ sent, failed }, { status: failed > 0 ? 207 : 200 });
 }
