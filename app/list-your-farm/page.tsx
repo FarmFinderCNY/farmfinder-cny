@@ -31,9 +31,9 @@ export default async function ListYourFarmPage({ searchParams }: { searchParams:
           <p className="eyebrow">Before you begin</p>
           <h2>What happens next?</h2>
           <ol>
-            <li><span>1</span><p><strong>You submit</strong>Your listing stays private while it’s pending.</p></li>
+            <li><span>1</span><p><strong>{defaultSubmissionType === "owner" ? "Submit and create your sign-in" : "You submit"}</strong>{defaultSubmissionType === "owner" ? "Choose your Farmer Portal password in this form." : "Your listing stays private while it’s pending."}</p></li>
             <li><span>2</span><p><strong>We review</strong>We verify the information and map location.</p></li>
-            <li><span>3</span><p><strong>Your community finds you</strong>Approved listings appear in the appropriate state and on the FarmFinder map.</p></li>
+            <li><span>3</span><p><strong>{defaultSubmissionType === "owner" ? "Verify once and manage" : "Your community finds it"}</strong>{defaultSubmissionType === "owner" ? "Open the approval email, then sign in with the password you already chose." : "Approved listings appear in the appropriate state and on the FarmFinder map."}</p></li>
           </ol>
         </aside>
         <FarmSubmissionForm defaultSubmissionType={defaultSubmissionType} defaultState={defaultState} areaName={areaName} />

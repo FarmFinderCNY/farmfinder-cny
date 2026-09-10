@@ -24,6 +24,7 @@ type SubmissionPayload = {
   source_url?: unknown;
   consent_to_publish?: unknown;
   company_website?: unknown;
+  account_password?: unknown;
 };
 
 function requiredText(value: unknown, maxLength: number) {
@@ -78,6 +79,7 @@ export async function POST(request: Request) {
   const zipCode = requiredText(body.zip_code, 10);
   const contactName = requiredText(body.contact_name, 120);
   const contactEmail = requiredText(body.contact_email, 254);
+  const accountPassword = submissionType === "owner" && typeof body.account_password === "string" ? body.account_password : null;
   const emailIsValid = contactEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail);
   const zipIsValid = zipCode && /^\d{5}(?:-\d{4})?$/.test(zipCode);
 
@@ -96,6 +98,7 @@ export async function POST(request: Request) {
     : [];
 
   if (!submissionType || !farmName || !address || !city || !state || !zipIsValid || !contactName || !emailIsValid || body.consent_to_publish !== true ||
+      (submissionType === "owner" && (!accountPassword || accountPassword.length < 8 || accountPassword.length > 72)) ||
       (submissionType === "community" && !sourceUrl) || (showSubmitterName && !submitterDisplayName) ||
       [description, publicPhone, website, hours, paymentMethods, contactPhone, submitterDisplayName, sourceUrl].includes(undefined)) {
     return NextResponse.json({ error: "Please check the form fields." }, { status: 400 });
@@ -139,6 +142,29 @@ export async function POST(request: Request) {
     }, { status: 409 });
   }
 
+  let createdAccountId: string | null = null;
+  let accountAlreadyExisted = false;
+  if (submissionType === "owner" && accountPassword) {
+    const normalizedEmail = contactEmail.toLowerCase();
+    const { data: accountData, error: accountError } = await serviceClient.auth.admin.createUser({
+      email: normalizedEmail,
+      password: accountPassword,
+      email_confirm: false,
+      user_metadata: { farmfinder_owner_submission: true },
+    });
+    if (accountError) {
+      accountAlreadyExisted = /already|registered|exists/i.test(accountError.message);
+      if (!accountAlreadyExisted) {
+        console.error("Owner account preparation failed:", accountError?.message);
+        return NextResponse.json({ error: "Unable to prepare your farmer sign-in right now." }, { status: 503 });
+      }
+    } else if (accountData.user) {
+      createdAccountId = accountData.user.id;
+    } else {
+      return NextResponse.json({ error: "Unable to prepare your farmer sign-in right now." }, { status: 503 });
+    }
+  }
+
   const submissionId = crypto.randomUUID();
   const { error } = await serviceClient.from("farm_stand_submissions").insert({
     id: submissionId,
@@ -164,9 +190,11 @@ export async function POST(request: Request) {
   });
 
   if (error?.code === "23505") {
+    if (createdAccountId) await serviceClient.auth.admin.deleteUser(createdAccountId);
     return NextResponse.json({ error: "This farm already has a submission waiting for review.", code: "duplicate_submission" }, { status: 409 });
   }
   if (error) {
+    if (createdAccountId) await serviceClient.auth.admin.deleteUser(createdAccountId);
     console.error("Farm submission insert failed:", error.message);
     return NextResponse.json({ error: "Unable to save the submission." }, { status: 500 });
   }
@@ -207,5 +235,5 @@ export async function POST(request: Request) {
     console.warn("Submission saved without email notification because email settings are missing.");
   }
 
-  return NextResponse.json({ ok: true }, { status: 201 });
+  return NextResponse.json({ ok: true, owner_account_prepared: submissionType === "owner", account_already_existed: accountAlreadyExisted }, { status: 201 });
 }

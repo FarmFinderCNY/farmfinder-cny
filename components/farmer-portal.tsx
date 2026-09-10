@@ -2,6 +2,7 @@
 import { FarmerInventory } from "@/components/farmer-inventory";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
 import type { FarmStand } from "@/lib/types";
 import { FarmerGrowingPractices } from "@/components/farmer-growing-practices";
@@ -284,27 +285,14 @@ export function FarmerPortal() {
   if (!signedIn)
     return (
       <form className="admin-login farmer-login" onSubmit={authenticate}>
-        <p className="eyebrow">Farmer portal</p>
-        <h1>{mode === "signin" ? "Welcome back." : "Create your account."}</h1>
+        <p className="eyebrow">Manage your farm</p>
+        <h1>{mode === "signin" ? "Farmer sign in" : "Create an account"}</h1>
         <p>
           {mode === "signin"
-            ? "Sign in to update your farm listing. If we already approved your ownership, your farm will connect automatically."
-            : "Use the same email address you provided with your farm submission. You may need to confirm it."}
+            ? "Use your email and password to update products, availability, and farm information."
+            : "Create an account to claim an existing unowned listing. New farm owners can create their sign-in while listing their farm."}
         </p>
-        <div className="farmer-login-steps">
-          <strong>Already submitted and approved your farm?</strong>
-          <p>
-            Use the approval email we sent you, or create an account with the
-            same email from your submission. Do not submit the farm again.
-          </p>
-          <ol>
-            <li>Open your approval email or create your account.</li>
-            <li>Use the same email address you submitted with your farm.</li>
-            <li>
-              Create a password and sign in to manage the existing listing.
-            </li>
-          </ol>
-        </div>
+        {mode === "signin" && <div className="farmer-login-steps"><strong>Listing a new farm?</strong><p>Create your Farmer Portal password as part of the listing form.</p><Link href="/list-your-farm">List my farm and create my sign-in →</Link></div>}
         <label>
           Email address
           <input
@@ -344,7 +332,7 @@ export function FarmerPortal() {
             disabled={loading}
             onClick={() => void sendPasswordReset()}
           >
-            Forgot or never created a password?
+            Forgot password?
           </button>
         )}
         <button
@@ -357,7 +345,7 @@ export function FarmerPortal() {
           }}
         >
           {mode === "signin"
-            ? "Need an account? Create one"
+            ? "Claiming an existing listing? Create an account"
             : "Already have an account? Sign in"}
         </button>
       </form>
@@ -379,11 +367,8 @@ export function FarmerPortal() {
       {error && <p className="form-error admin-error">{error}</p>}
       {message && <p className="form-success portal-message">{message}</p>}
       <details className="portal-section account-security">
-        <summary>Account password and access</summary>
-        <p>
-          Just opened an approval or reset email? Create a password now so you
-          can return later.
-        </p>
+        <summary>Change password</summary>
+        <p>Choose a new password for future sign-ins.</p>
         <form onSubmit={saveAccountPassword}>
           <label>
             New password
@@ -417,14 +402,10 @@ export function FarmerPortal() {
                   FarmFinder sign to help customers find and follow your
                   listing.
                 </p>
-                <div className="portal-farms">
+                <div className="portal-farms owner-farms">
                   {owned.map((farm) => (
-                    <article key={farm.id}>
-                      <h3>{farm.name}</h3>
-                      <p>
-                        {farm.city}, {farm.state}
-                      </p>
-                      <div className="detail-actions">
+                    <article className="farm-management-card" key={farm.id}>
+                      <div className="farm-management-heading"><div><p className="eyebrow">Managing</p><h3>{farm.name}</h3><p>{farm.city}, {farm.state}</p></div><div className="detail-actions">
                         <button type="button" onClick={() => setEditing(farm)}>
                           Request an update
                         </button>
@@ -436,17 +417,16 @@ export function FarmerPortal() {
                         >
                           ▦ Print FarmFinder QR sign ↗
                         </a>
+                      </div></div>
+                      <div className="farm-management-grid">
+                        <FarmerInventory farmId={farm.id} farmName={farm.name} />
+                        <div className="farm-management-side">
+                          <FarmerGrowthTools farmId={farm.id} />
+                          {"growing_practices" in farm && (
+                            <FarmerGrowingPractices farmId={farm.id} initialPractices={farm.growing_practices ?? []} initialNote={farm.growing_practices_note} initialOrganicCertifier={farm.organic_certifier} />
+                          )}
+                        </div>
                       </div>
-                      <FarmerInventory farmId={farm.id} farmName={farm.name} />
-                      <FarmerGrowthTools farmId={farm.id} />
-                      {"growing_practices" in farm && (
-                        <FarmerGrowingPractices
-                          farmId={farm.id}
-                          initialPractices={farm.growing_practices ?? []}
-                          initialNote={farm.growing_practices_note}
-                          initialOrganicCertifier={farm.organic_certifier}
-                        />
-                      )}
                     </article>
                   ))}
                 </div>
