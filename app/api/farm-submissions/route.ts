@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabase";
 import { listingsMatch } from "@/lib/listing-match";
 
@@ -101,9 +102,17 @@ export async function POST(request: Request) {
   }
 
   const supabase = getSupabaseClient();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceRoleKey) {
+    return NextResponse.json({ error: "Submission review is not configured." }, { status: 503 });
+  }
+  const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
   const [{ data: existingListings, error: existingListingsError }, { data: pendingSubmissions, error: pendingError }] = await Promise.all([
     supabase.from("farm_stands").select("id,name,address,city,state,zip_code").eq("is_active", true),
-    supabase.from("farm_stand_submissions").select("id,farm_name,address,city,state,zip_code").eq("status", "pending"),
+    serviceClient.from("farm_stand_submissions").select("id,farm_name,address,city,state,zip_code").eq("status", "pending"),
   ]);
 
   if (existingListingsError || pendingError) {
@@ -131,7 +140,7 @@ export async function POST(request: Request) {
   }
 
   const submissionId = crypto.randomUUID();
-  const { error } = await supabase.from("farm_stand_submissions").insert({
+  const { error } = await serviceClient.from("farm_stand_submissions").insert({
     id: submissionId,
     submission_type: submissionType,
     farm_name: farmName,
