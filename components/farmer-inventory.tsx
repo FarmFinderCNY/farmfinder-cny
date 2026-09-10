@@ -136,7 +136,8 @@ export function FarmerInventory({
 
   async function addProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const values = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const values = new FormData(form);
     const name = String(values.get("name") ?? "").trim();
     if (!name) return;
     setLoading(true);
@@ -161,7 +162,7 @@ export function FarmerInventory({
         setError(insertError.message);
         return;
       }
-      event.currentTarget.reset();
+      form.reset();
       const { data: refreshedFarm, error: freshnessError } = await getBrowserSupabaseClient()
         .from("farm_stands")
         .update({
