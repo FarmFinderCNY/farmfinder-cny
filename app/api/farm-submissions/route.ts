@@ -95,7 +95,7 @@ export async function POST(request: Request) {
   const supabase = getSupabaseClient();
   const [{ data: existingListings, error: existingListingsError }, { data: pendingSubmissions, error: pendingError }] = await Promise.all([
     supabase.from("farm_stands").select("id,name,address,city,state,zip_code").eq("is_active", true),
-    supabase.from("farm_stand_submissions").select("id,farm_name,address,city,state,zip_code").eq("status", "pending"),
+    supabase.from("farm_stand_submissions").select("id,submission_type,farm_name,address,city,state,zip_code").eq("status", "pending"),
   ]);
 
   if (existingListingsError || pendingError) {
@@ -106,18 +106,23 @@ export async function POST(request: Request) {
   const candidate = { farm_name: farmName, address, city, state, zip_code: zipCode };
   const duplicate = (existingListings ?? []).find((listing) => listingsMatch(listing, candidate));
 
-  if (duplicate) {
+  // Community suggestions should never duplicate a live listing. Owners are different:
+  // an owner must be allowed to submit against an existing listing so the admin review
+  // flow can verify them and connect their account to that farm.
+  if (duplicate && submissionType === "community") {
     return NextResponse.json({
-      error: "This farm is already listed. View the existing listing or use the Farmer Portal instead of submitting it again.",
+      error: "This farm is already listed. View the existing listing instead of submitting it again.",
       code: "duplicate_listing",
       existing_farm_id: duplicate.id,
       existing_farm_name: duplicate.name,
     }, { status: 409 });
   }
 
-  if ((pendingSubmissions ?? []).some((submission) => listingsMatch(submission, candidate))) {
+  if ((pendingSubmissions ?? []).some((submission) => listingsMatch(submission, candidate) && submission.submission_type === submissionType)) {
     return NextResponse.json({
-      error: "This farm already has a submission waiting for review. Please do not submit it again.",
+      error: submissionType === "owner"
+        ? "An ownership request for this farm is already waiting for review."
+        : "This farm already has a submission waiting for review. Please do not submit it again.",
       code: "duplicate_submission",
     }, { status: 409 });
   }
