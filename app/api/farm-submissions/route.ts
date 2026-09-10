@@ -1,192 +1,45 @@
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import { getSupabaseClient } from "@/lib/supabase";
 import { listingsMatch } from "@/lib/listing-match";
 
 type SubmissionPayload = {
-  submission_type?: unknown;
-  farm_name?: unknown;
-  address?: unknown;
-  city?: unknown;
-  state?: unknown;
-  zip_code?: unknown;
-  description?: unknown;
-  public_phone?: unknown;
-  website?: unknown;
-  hours?: unknown;
-  payment_methods?: unknown;
-  product_categories?: unknown;
-  contact_name?: unknown;
-  contact_email?: unknown;
-  contact_phone?: unknown;
-  submitter_display_name?: unknown;
-  show_submitter_name?: unknown;
-  source_url?: unknown;
-  consent_to_publish?: unknown;
-  company_website?: unknown;
+  submission_type?: unknown; farm_name?: unknown; address?: unknown; city?: unknown; state?: unknown; zip_code?: unknown;
+  description?: unknown; public_phone?: unknown; website?: unknown; hours?: unknown; payment_methods?: unknown; product_categories?: unknown;
+  contact_name?: unknown; contact_email?: unknown; contact_phone?: unknown; submitter_display_name?: unknown; show_submitter_name?: unknown;
+  source_url?: unknown; consent_to_publish?: unknown; company_website?: unknown;
 };
-
-function requiredText(value: unknown, maxLength: number) {
-  if (typeof value !== "string") return null;
-  const text = value.trim();
-  return text.length > 0 && text.length <= maxLength ? text : null;
-}
-
-function optionalText(value: unknown, maxLength: number) {
-  if (value === null || value === undefined || value === "") return null;
-  if (typeof value !== "string") return undefined;
-  const text = value.trim();
-  return text.length <= maxLength ? text || null : undefined;
-}
-
-function escapeHtml(value: string) {
-  return value.replace(/[&<>'"]/g, (character) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "'": "&#39;",
-    '"': "&quot;",
-  })[character] ?? character);
-}
+function requiredText(value: unknown, maxLength: number) { if (typeof value !== "string") return null; const text=value.trim(); return text.length>0&&text.length<=maxLength?text:null; }
+function optionalText(value: unknown,maxLength:number){if(value===null||value===undefined||value==="")return null;if(typeof value!=="string")return undefined;const text=value.trim();return text.length<=maxLength?text||null:undefined;}
+function escapeHtml(value:string){return value.replace(/[&<>'"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[c]??c);}
 
 export async function POST(request: Request) {
-  let body: SubmissionPayload;
-  try {
-    body = await request.json() as SubmissionPayload;
-  } catch {
-    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
-  }
+  let body: SubmissionPayload; try { body=await request.json() as SubmissionPayload; } catch { return NextResponse.json({error:"Invalid request."},{status:400}); }
+  if(typeof body.company_website==="string"&&body.company_website.trim()) return NextResponse.json({ok:true});
+  const farmName=requiredText(body.farm_name,120), submissionType=body.submission_type==="community"?"community":body.submission_type==="owner"?"owner":null;
+  const address=requiredText(body.address,180),city=requiredText(body.city,100),state=requiredText(body.state,2),zipCode=requiredText(body.zip_code,10);
+  const contactName=requiredText(body.contact_name,120),contactEmail=requiredText(body.contact_email,254);
+  const emailIsValid=contactEmail&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail),zipIsValid=zipCode&&/^\d{5}(?:-\d{4})?$/.test(zipCode);
+  const description=optionalText(body.description,1000),publicPhone=optionalText(body.public_phone,30),website=optionalText(body.website,250),hours=optionalText(body.hours,300),paymentMethods=optionalText(body.payment_methods,200),contactPhone=optionalText(body.contact_phone,30),submitterDisplayName=optionalText(body.submitter_display_name,80),sourceUrl=optionalText(body.source_url,500);
+  const showSubmitterName=body.show_submitter_name===true; const allowedCategories=new Set(["Produce","Meat","Eggs","Dairy","Maple","Honey","Flowers","Pumpkins","Baked goods","Other"]); const productCategories=Array.isArray(body.product_categories)?body.product_categories.filter((x):x is string=>typeof x==="string"&&allowedCategories.has(x)):[];
+  if(!submissionType||!farmName||!address||!city||!state||!zipIsValid||!contactName||!emailIsValid||body.consent_to_publish!==true||(submissionType==="community"&&!sourceUrl)||(showSubmitterName&&!submitterDisplayName)||[description,publicPhone,website,hours,paymentMethods,contactPhone,submitterDisplayName,sourceUrl].includes(undefined)) return NextResponse.json({error:"Please check the form fields."},{status:400});
 
-  // Quietly accept bot submissions caught by the hidden field.
-  if (typeof body.company_website === "string" && body.company_website.trim()) {
-    return NextResponse.json({ ok: true });
-  }
-
-  const farmName = requiredText(body.farm_name, 120);
-  const submissionType = body.submission_type === "community" ? "community" : body.submission_type === "owner" ? "owner" : null;
-  const address = requiredText(body.address, 180);
-  const city = requiredText(body.city, 100);
-  const state = requiredText(body.state, 2);
-  const zipCode = requiredText(body.zip_code, 10);
-  const contactName = requiredText(body.contact_name, 120);
-  const contactEmail = requiredText(body.contact_email, 254);
-  const emailIsValid = contactEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail);
-  const zipIsValid = zipCode && /^\d{5}(?:-\d{4})?$/.test(zipCode);
-
-  const description = optionalText(body.description, 1000);
-  const publicPhone = optionalText(body.public_phone, 30);
-  const website = optionalText(body.website, 250);
-  const hours = optionalText(body.hours, 300);
-  const paymentMethods = optionalText(body.payment_methods, 200);
-  const contactPhone = optionalText(body.contact_phone, 30);
-  const submitterDisplayName = optionalText(body.submitter_display_name, 80);
-  const sourceUrl = optionalText(body.source_url, 500);
-  const showSubmitterName = body.show_submitter_name === true;
-  const allowedCategories = new Set(["Produce", "Meat", "Eggs", "Dairy", "Maple", "Honey", "Flowers", "Pumpkins", "Baked goods", "Other"]);
-  const productCategories = Array.isArray(body.product_categories)
-    ? body.product_categories.filter((item): item is string => typeof item === "string" && allowedCategories.has(item))
-    : [];
-
-  if (!submissionType || !farmName || !address || !city || !state || !zipIsValid || !contactName || !emailIsValid || body.consent_to_publish !== true ||
-      (submissionType === "community" && !sourceUrl) || (showSubmitterName && !submitterDisplayName) ||
-      [description, publicPhone, website, hours, paymentMethods, contactPhone, submitterDisplayName, sourceUrl].includes(undefined)) {
-    return NextResponse.json({ error: "Please check the form fields." }, { status: 400 });
-  }
-
-  const supabase = getSupabaseClient();
-  const [{ data: existingListings, error: existingListingsError }, { data: pendingSubmissions, error: pendingError }] = await Promise.all([
-    supabase.from("farm_stands").select("id,name,address,city,state,zip_code").eq("is_active", true),
-    supabase.from("farm_stand_submissions").select("id,submission_type,farm_name,address,city,state,zip_code").eq("status", "pending"),
+  // These checks run on the server and require private submission data. Using the
+  // service role here keeps RLS intact for browsers while allowing the API to safely
+  // detect duplicates and save a reviewed pending submission.
+  const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL, serviceRoleKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if(!supabaseUrl||!serviceRoleKey) return NextResponse.json({error:"Farm submissions are temporarily unavailable."},{status:503});
+  const supabase=createClient(supabaseUrl,serviceRoleKey,{auth:{persistSession:false,autoRefreshToken:false}});
+  const [{data:existingListings,error:existingListingsError},{data:pendingSubmissions,error:pendingError}]=await Promise.all([
+    supabase.from("farm_stands").select("id,name,address,city,state,zip_code").eq("is_active",true),
+    supabase.from("farm_stand_submissions").select("id,submission_type,farm_name,address,city,state,zip_code").eq("status","pending")
   ]);
-
-  if (existingListingsError || pendingError) {
-    console.error("Duplicate listing check failed:", existingListingsError?.message ?? pendingError?.message);
-    return NextResponse.json({ error: "Unable to check existing listings right now." }, { status: 503 });
-  }
-
-  const candidate = { farm_name: farmName, address, city, state, zip_code: zipCode };
-  const duplicate = (existingListings ?? []).find((listing) => listingsMatch(listing, candidate));
-
-  // Community suggestions should never duplicate a live listing. Owners are different:
-  // an owner must be allowed to submit against an existing listing so the admin review
-  // flow can verify them and connect their account to that farm.
-  if (duplicate && submissionType === "community") {
-    return NextResponse.json({
-      error: "This farm is already listed. View the existing listing instead of submitting it again.",
-      code: "duplicate_listing",
-      existing_farm_id: duplicate.id,
-      existing_farm_name: duplicate.name,
-    }, { status: 409 });
-  }
-
-  if ((pendingSubmissions ?? []).some((submission) => listingsMatch(submission, candidate) && submission.submission_type === submissionType)) {
-    return NextResponse.json({
-      error: submissionType === "owner"
-        ? "An ownership request for this farm is already waiting for review."
-        : "This farm already has a submission waiting for review. Please do not submit it again.",
-      code: "duplicate_submission",
-    }, { status: 409 });
-  }
-
-  const { error } = await supabase.from("farm_stand_submissions").insert({
-    submission_type: submissionType,
-    farm_name: farmName,
-    address,
-    city,
-    state: state.toUpperCase(),
-    zip_code: zipCode,
-    description,
-    public_phone: publicPhone,
-    website,
-    hours,
-    payment_methods: paymentMethods,
-    product_categories: productCategories,
-    contact_name: contactName,
-    contact_email: contactEmail.toLowerCase(),
-    contact_phone: contactPhone,
-    submitter_display_name: showSubmitterName ? submitterDisplayName : null,
-    show_submitter_name: showSubmitterName,
-    source_url: submissionType === "community" ? sourceUrl : null,
-    consent_to_publish: true,
-  });
-
-  if (error) {
-    console.error("Farm submission insert failed:", error.message);
-    return NextResponse.json({ error: "Unable to save the submission." }, { status: 500 });
-  }
-
-  const resendKey = process.env.RESEND_API_KEY;
-  const adminEmail = "farmfindercny@gmail.com";
-  if (resendKey && adminEmail) {
-    try {
-      const safeFarmName = escapeHtml(farmName);
-      const safeContactName = escapeHtml(contactName);
-      const safeContactEmail = escapeHtml(contactEmail);
-      const safeLocation = escapeHtml(`${address}, ${city}, ${state.toUpperCase()} ${zipCode}`);
-      const emailResponse = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${resendKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: "FarmFinder CNY <notifications@send.farmfindercny.com>",
-          to: [adminEmail],
-          reply_to: contactEmail,
-          subject: `New ${submissionType === "community" ? "community suggestion" : "farm submission"}: ${farmName}`,
-          html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#123f2d"><h1>New ${submissionType === "community" ? "community suggestion" : "farm submission"}</h1><h2>${safeFarmName}</h2><p><strong>Location:</strong> ${safeLocation}</p><p><strong>Submitted by:</strong> ${safeContactName} (${safeContactEmail})</p><p>A new listing is waiting in your private review queue.</p><p><a href="https://www.farmfindercny.com/admin" style="display:inline-block;padding:12px 18px;background:#123f2d;color:white;text-decoration:none;border-radius:6px">Review submission</a></p></div>`,
-        }),
-      });
-
-      if (!emailResponse.ok) {
-        console.error("Resend notification failed:", await emailResponse.text());
-      }
-    } catch (notificationError) {
-      // The listing is already safely stored, so an email outage must not invite duplicate submissions.
-      console.error("Resend notification request failed:", notificationError);
-    }
-  } else {
-    console.warn("Submission saved without email notification because email settings are missing.");
-  }
-
-  return NextResponse.json({ ok: true }, { status: 201 });
+  if(existingListingsError||pendingError){console.error("Duplicate listing check failed:",existingListingsError?.message??pendingError?.message);return NextResponse.json({error:"Unable to check existing listings right now."},{status:503});}
+  const candidate={farm_name:farmName,address,city,state,zip_code:zipCode}; const duplicate=(existingListings??[]).find((listing)=>listingsMatch(listing,candidate));
+  if(duplicate&&submissionType==="community") return NextResponse.json({error:"This farm is already listed. View the existing listing instead of submitting it again.",code:"duplicate_listing",existing_farm_id:duplicate.id,existing_farm_name:duplicate.name},{status:409});
+  if((pendingSubmissions??[]).some((submission)=>listingsMatch(submission,candidate)&&submission.submission_type===submissionType)) return NextResponse.json({error:submissionType==="owner"?"An ownership request for this farm is already waiting for review.":"This farm already has a submission waiting for review. Please do not submit it again.",code:"duplicate_submission"},{status:409});
+  const {error}=await supabase.from("farm_stand_submissions").insert({submission_type:submissionType,farm_name:farmName,address,city,state:state.toUpperCase(),zip_code:zipCode,description,public_phone:publicPhone,website,hours,payment_methods:paymentMethods,product_categories:productCategories,contact_name:contactName,contact_email:contactEmail.toLowerCase(),contact_phone:contactPhone,submitter_display_name:showSubmitterName?submitterDisplayName:null,show_submitter_name:showSubmitterName,source_url:submissionType==="community"?sourceUrl:null,consent_to_publish:true});
+  if(error){console.error("Farm submission insert failed:",error.message);return NextResponse.json({error:"Unable to save the submission."},{status:500});}
+  const resendKey=process.env.RESEND_API_KEY,adminEmail="farmfindercny@gmail.com";
+  if(resendKey){try{const emailResponse=await fetch("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${resendKey}`,"Content-Type":"application/json"},body:JSON.stringify({from:"FarmFinder CNY <notifications@send.farmfindercny.com>",to:[adminEmail],reply_to:contactEmail,subject:`New ${submissionType==="community"?"community suggestion":"farm submission"}: ${farmName}`,html:`<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#123f2d"><h1>New ${submissionType==="community"?"community suggestion":"farm submission"}</h1><h2>${escapeHtml(farmName)}</h2><p><strong>Location:</strong> ${escapeHtml(`${address}, ${city}, ${state.toUpperCase()} ${zipCode}`)}</p><p><strong>Submitted by:</strong> ${escapeHtml(contactName)} (${escapeHtml(contactEmail)})</p><p>A new listing is waiting in your private review queue.</p><p><a href="https://www.farmfindercny.com/admin">Review submission</a></p></div>`})});if(!emailResponse.ok)console.error("Resend notification failed:",await emailResponse.text());}catch(e){console.error("Resend notification request failed:",e);}}
+  return NextResponse.json({ok:true},{status:201});
 }
