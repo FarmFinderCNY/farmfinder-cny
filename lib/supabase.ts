@@ -12,6 +12,22 @@ export function getSupabaseClient() {
   return createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
+function dedupeInventory(farm: FarmStand): FarmStand {
+  const inventory = [...(farm.inventory ?? [])].sort((left, right) => {
+    const updatedDifference = new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime();
+    if (updatedDifference !== 0) return updatedDifference;
+    return (left.sort_order ?? Number.MAX_SAFE_INTEGER) - (right.sort_order ?? Number.MAX_SAFE_INTEGER);
+  });
+  const unique = new Map<string, FarmStand["inventory"][number]>();
+  for (const item of inventory) {
+    const key = item.name.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    if (!unique.has(key)) unique.set(key, item);
+  }
+  return { ...farm, inventory: Array.from(unique.values()).sort((left, right) =>
+    (left.sort_order ?? Number.MAX_SAFE_INTEGER) - (right.sort_order ?? Number.MAX_SAFE_INTEGER),
+  ) };
+}
+
 async function addMarketData(client: ReturnType<typeof getSupabaseClient>, farms: FarmStand[]): Promise<FarmStand[]> {
   if (farms.length === 0) return farms;
   const ids = farms.map((farm) => farm.id);
@@ -24,7 +40,7 @@ async function addMarketData(client: ReturnType<typeof getSupabaseClient>, farms
     const vendorResult = await client.from("market_vendors").select("id,market_id,vendor_name,linked_farm_id,is_attending,display_order,note,updated_at,created_at").in("market_id", marketIds).eq("is_attending", true).order("display_order", { ascending: true }).order("vendor_name", { ascending: true });
     if (!vendorResult.error) vendors = (vendorResult.data ?? []) as MarketVendor[];
   }
-  return farms.map((farm) => ({ ...farm, listing_type: resolveListingType(farm.name, types.get(farm.id)), market_vendors: vendors.filter((vendor) => vendor.market_id === farm.id) }));
+  return farms.map((farm) => dedupeInventory({ ...farm, listing_type: resolveListingType(farm.name, types.get(farm.id)), market_vendors: vendors.filter((vendor) => vendor.market_id === farm.id) }));
 }
 
 export async function getActiveFarmStands(): Promise<FarmStand[]> {

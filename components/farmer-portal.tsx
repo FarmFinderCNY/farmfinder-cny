@@ -24,7 +24,7 @@ export function FarmerPortal() {
     [claims, setClaims] = useState<Claim[]>([]),
     [userId, setUserId] = useState(""),
     [userEmail, setUserEmail] = useState(""),
-    [loading, setLoading] = useState(true),
+    [loading, setLoading] = useState(false),
     [message, setMessage] = useState(""),
     [error, setError] = useState(""),
     [editing, setEditing] = useState<FarmStand | null>(null),
