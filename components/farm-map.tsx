@@ -29,7 +29,7 @@ export function FarmMap({ stands, userLocation = null }: { stands: FarmStand[]; 
 const stands=${standData};
 const userLocation=${locationData};
 const map=L.map('map',{scrollWheelZoom:false});
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'}).addTo(map);
 const icon=L.divIcon({className:'farm-pin',html:'',iconSize:[36,36],iconAnchor:[18,34],popupAnchor:[0,-30]});
 const points=[];
 const safe=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
