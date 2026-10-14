@@ -711,7 +711,9 @@ h1 em { color:var(--orange); font-weight:450; }
 .save-farm-error { color:#923d2e; font-size:13px; margin:8px 0 0; }
 .farm-customer-actions { display:flex; flex-wrap:wrap; align-items:center; gap:16px; margin:22px 0; }
 .customer-shell { padding-block:48px 65px; }
-.customer-welcome { display:grid; grid-template-columns:1.1fr 1fr; gap:60px; align-items:start; }
+.customer-welcome { display:grid; grid-template-columns:1fr; gap:40px; align-items:start; }
+.customer-welcome > .customer-auth { width:100%; max-width:540px; margin-inline:auto; }
+.customer-welcome > .customer-intro { width:100%; max-width:760px; margin-inline:auto; }
 .customer-intro h1,.customer-dashboard h1 { color:var(--forest); font-family:var(--font-display); font-size:clamp(40px,5vw,64px); line-height:1.1; margin:12px 0 22px; }
 .customer-intro h1 em { font-weight:400; }
 .customer-benefits { display:grid; gap:18px; margin:30px 0; }
