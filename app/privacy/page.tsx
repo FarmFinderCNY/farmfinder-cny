@@ -11,12 +11,12 @@ export default function PrivacyPolicyPage() {
       <section style={{ maxWidth: "760px", padding: "60px 0" }}>
         <p className="eyebrow">FarmFinder CNY</p>
         <h1>Privacy Policy</h1>
-        <p>Effective August 25, 2026</p>
+        <p>Effective October 14, 2026</p>
 
         <h2>Information we collect</h2>
         <p>
           FarmFinder CNY may collect information you voluntarily provide,
-          including your email address, requested product alerts, farm
+          including your email address, saved farm preferences, requested product alerts, farm
           submissions, ownership claims, and contact information.
         </p>
 
@@ -25,6 +25,14 @@ export default function PrivacyPolicyPage() {
           We use this information to operate FarmFinder CNY, process farm
           listings and ownership claims, send requested product-availability
           alerts, prevent misuse, and improve the service.
+        </p>
+
+        <h2>My Farms accounts</h2>
+        <p>
+          When you create an account or save a farm, we store your saved farm
+          choices with your account so you can access them on other devices.
+          Saving a farm does not subscribe you to email alerts. You can remove
+          saved farms from My Farms at any time.
         </p>
 
         <h2>Notify Me alerts</h2>

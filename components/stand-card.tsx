@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getGrowingPracticeCardBadge } from "@/lib/growing-practices";
 import { getMarketLabel } from "@/lib/listing-type";
 import { recordAnalyticsEvent } from "@/components/analytics-tracker";
+import { SaveFarmButton } from "@/components/customer-favorites";
 type InventoryItem = FarmStand["inventory"][number];
 export function StandCard({ stand, distanceMiles = null, matchingProducts = [], listedProductMatch = false, searchLabel = "" }: { stand: FarmStand; distanceMiles?: number | null; matchingProducts?: InventoryItem[]; listedProductMatch?: boolean; searchLabel?: string; }) {
   const location = [stand.address, stand.city, stand.state, stand.zip_code].filter(Boolean).join(", ");
@@ -27,6 +28,7 @@ export function StandCard({ stand, distanceMiles = null, matchingProducts = [], 
       {matchingProducts.length === 0 && !listedProductMatch && updatedWithinSevenDays && availableToday.length > 0 && <div className="inventory-summary"><strong>Available today</strong><span>{availableToday.slice(0, 3).map((item) => item.status === "low" ? `${item.name} (low)` : item.name).join(" · ")}{availableToday.length > 3 ? ` · +${availableToday.length - 3} more` : ""}</span>{stand.farmer_inventory_updated_at && <span>Updated {new Date(stand.farmer_inventory_updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>}</div>}
       {matchingProducts.length === 0 && !listedProductMatch && (!updatedWithinSevenDays || availableToday.length === 0) && stand.product_categories.length > 0 && <div className="category-group"><div className="category-chips">{stand.product_categories.slice(0, 4).map((category) => <span key={category}>{category}</span>)}</div></div>}
     </>}
+    <SaveFarmButton farmId={stand.id} farmName={stand.name} />
     <div className="card-links"><Link href={`/farms/${stand.id}`} onClick={() => recordAnalyticsEvent("farm_detail_view", { farmId: stand.id })}>{isMarket ? "View market" : "View details"}</Link><a href={directions} target="_blank" rel="noreferrer" onClick={() => recordAnalyticsEvent("directions_click", { farmId: stand.id })}>Directions ↗</a></div>
   </article>;
 }

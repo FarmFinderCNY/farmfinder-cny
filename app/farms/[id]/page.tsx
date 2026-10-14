@@ -7,6 +7,7 @@ import FollowFarmForm from "@/app/components/FollowFarmForm";
 import { getGrowingPracticeLabel } from "@/lib/growing-practices";
 import { getMarketLabel, resolveMarketSchedule } from "@/lib/listing-type";
 import { FarmEngagementTracker } from "@/components/farm-engagement-tracker";
+import { SaveFarmButton } from "@/components/customer-favorites";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -51,6 +52,7 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ id:
           {(!updatedWithinSevenDays || availableToday.length === 0) && <div className="availability-note"><strong>{!stand.farmer_inventory_updated_at ? "Waiting for the farm’s first availability update" : !updatedWithinSevenDays ? "Availability needs a fresh update" : "No products marked available today"}</strong><span>{!stand.farmer_inventory_updated_at ? "This farm hasn’t posted current availability on FarmFinder yet. Contact the farm before making a special trip." : !updatedWithinSevenDays ? "The last farm update is more than seven days old. Contact the farm before making a special trip." : "The farm has not marked any products available right now. Contact the farm before making a special trip."}</span></div>}
         </>}
         <dl className="farm-facts">{stand.hours && <><dt>{isMarket ? "Market hours" : "Hours"}</dt><dd>{stand.hours}</dd></>}{stand.payment_methods && <><dt>Payment</dt><dd>{stand.payment_methods}</dd></>}{stand.phone && <><dt>Phone</dt><dd><a href={`tel:${stand.phone}`}>{stand.phone}</a></dd></>}</dl>
+        <div className="farm-customer-actions"><SaveFarmButton farmId={stand.id} farmName={stand.name} /><Link className="text-button" href="/my-farms">My Farms →</Link></div>
         {!isMarket && <FollowFarmForm farmId={stand.id} farmName={stand.name} />}
         <div className="detail-actions"><a className="primary-button" href={directions} data-farm-event="directions_click" target="_blank" rel="noreferrer">Get directions <span>↗</span></a>{website && <a className="text-button" href={website} data-farm-event="website_click" target="_blank" rel="noreferrer">Visit website ↗</a>}{!stand.owner_user_id && !stand.is_verified && <Link className="text-button" href={`/farms/${stand.id}/claim`}>🌾 Own or manage this {isMarket ? "market" : "farm"}? Connect your account</Link>}</div>
       </div>{stand.photo_url ? <div className="farm-detail-visual has-photo"><img src={stand.photo_url} alt={`${stand.name} farm`} /></div> : <div className="farm-detail-visual"><span>{isMarket ? "Local vendors. One community market." : "Fresh food, closer to home"}</span></div>}</article>

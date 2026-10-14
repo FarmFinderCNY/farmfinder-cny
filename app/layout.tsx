@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
 import { AnalyticsPageTracker } from "@/components/analytics-tracker";
+import { CustomerFavoritesProvider } from "@/components/customer-favorites";
 import "./globals.css";
 import "./hero-fix.css";
 import "./farmer-fix.css";
@@ -23,7 +24,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body className={`${sans.variable} ${display.variable}`}>
         <AnalyticsPageTracker />
-        {children}
+        <CustomerFavoritesProvider>{children}</CustomerFavoritesProvider>
       </body>
     </html>
   );
