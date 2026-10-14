@@ -296,7 +296,14 @@ export function StandDirectory({ stands }: { stands: FarmStand[] }) {
           matchesCategory = stand.product_categories.includes(category);
         }
 
-        const availabilityRank = matchingProducts.some((product) => product.status === "available")
+        const inventoryUpdatedAt = stand.farmer_inventory_updated_at
+          ? new Date(stand.farmer_inventory_updated_at).getTime()
+          : null;
+        const inventoryAge = inventoryUpdatedAt === null ? null : Date.now() - inventoryUpdatedAt;
+        const updatedWithinSevenDays = inventoryAge !== null && inventoryAge >= 0 && inventoryAge < 7 * 24 * 60 * 60 * 1000;
+        const availabilityRank = !updatedWithinSevenDays
+          ? 3
+          : matchingProducts.some((product) => product.status === "available")
           ? 0
           : matchingProducts.some((product) => product.status === "low")
             ? 1
